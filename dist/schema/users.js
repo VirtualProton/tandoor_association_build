@@ -1,31 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SignUpSchema = exports.Gender = exports.Status = exports.Role = void 0;
+exports.SignUpSchema = void 0;
 const zod_1 = require("zod");
-// Enums
-var Role;
-(function (Role) {
-    Role["ADMIN"] = "ADMIN";
-    Role["EDITOR"] = "EDITOR";
-    Role["VIEWER"] = "VIEWER";
-})(Role || (exports.Role = Role = {}));
-var Status;
-(function (Status) {
-    Status["ACTIVE"] = "ACTIVE";
-    Status["INACTIVE"] = "INACTIVE";
-})(Status || (exports.Status = Status = {}));
-var Gender;
-(function (Gender) {
-    Gender["MALE"] = "MALE";
-    Gender["FEMALE"] = "FEMALE";
-    Gender["OTHER"] = "OTHER";
-})(Gender || (exports.Gender = Gender = {}));
+const Role = zod_1.z.enum(["ADMIN", "ADMIN_VIEWER", "TSMWA_EDITOR", "TSMWA_VIEWER", "TQMA_EDITOR", "TQMA_VIEWER"]);
+const StatusEnum = zod_1.z.enum(["ACTIVE", "INACTIVE"]);
+const GenderEnum = zod_1.z.enum(["MALE", "FEMALE", "OTHER"]);
 // Schema
 exports.SignUpSchema = zod_1.z.object({
     fullName: zod_1.z.string().min(1, "Full name is required"),
-    gender: zod_1.z.nativeEnum(Gender),
+    gender: GenderEnum.default("MALE"),
     email: zod_1.z.string().email("Invalid email address"),
     phone: zod_1.z.string().min(10, "Phone number must be at least 10 digits"),
-    password: zod_1.z.string().min(6, "Password must be at least 6 characters").optional(),
-    role: zod_1.z.nativeEnum(Role).default(Role.VIEWER),
+    role: Role.default("ADMIN_VIEWER"),
+    status: StatusEnum.default("ACTIVE")
 });
