@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const error_handler_1 = require("../error-handler");
+const scheduleMeeting_1 = require("../controllers/Meeting/scheduleMeeting");
+const authenticateToken_1 = require("../middlewares/authenticateToken");
+const modifyMeeting_1 = require("../controllers/Meeting/modifyMeeting");
+const meetingRoutes = (0, express_1.Router)();
+meetingRoutes.post('/schedule_meeting', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(scheduleMeeting_1.scheduleMeeting));
+meetingRoutes.post('/update_meeting', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(modifyMeeting_1.updateMeeting));
+exports.default = meetingRoutes;

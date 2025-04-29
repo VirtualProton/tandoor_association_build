@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const error_handler_1 = require("../error-handler");
+const addLabour_1 = require("../controllers/Labours/addLabour");
+const authenticateToken_1 = require("../middlewares/authenticateToken");
+const getLabour_1 = require("../controllers/Labours/getLabour");
+const updateLabour_1 = require("../controllers/Labours/updateLabour");
+const labourRoutes = (0, express_1.Router)();
+labourRoutes.post('/add_labour', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(addLabour_1.addLabour));
+labourRoutes.post('/update_labour', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(updateLabour_1.updateLabour));
+labourRoutes.get('/get_all_active_labours', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getLabour_1.getAllActiveLabours));
+labourRoutes.get('/get_all_inactive_labours', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getLabour_1.getAllInactiveLabours));
+labourRoutes.get('/get_all_benched_labours', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getLabour_1.getAllBenchedLabours));
+exports.default = labourRoutes;
