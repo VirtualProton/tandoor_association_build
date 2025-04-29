@@ -45,6 +45,9 @@ const validateUSCNumber = (req, res, next) => __awaiter(void 0, void 0, void 0, 
                 if (matchingBranch) {
                     res.json({ isMember: true, membershipId: member.membershipId, message: `Branch of member ${member.membershipId} ` });
                 }
+                else {
+                    res.json({ isMember: false, message: "Not a member" });
+                }
             }
         }
     }
@@ -56,8 +59,8 @@ exports.validateUSCNumber = validateUSCNumber;
 const addMember = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const memberDetails = AddMember_1.MemberSignUpSchema.parse(req.body);
     try {
-        if (req.user.role === "VIEWER") {
-            next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
+        if (!["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
+            return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
         }
         const result = yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
             //Create a member
