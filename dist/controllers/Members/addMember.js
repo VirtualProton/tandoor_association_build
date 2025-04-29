@@ -50,6 +50,7 @@ const validateUSCNumber = (req, res, next) => __awaiter(void 0, void 0, void 0, 
                 }
             }
         }
+        res.json({ isMember: false, message: "Not a member" });
     }
     catch (e) {
         next(new bad_request_1.BadRequestsException("Error while validating USC number", root_1.ErrorCode.BAD_REQUEST));
