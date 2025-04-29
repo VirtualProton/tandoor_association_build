@@ -1,0 +1,468 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+//User Table
+model User {
+  id        Int      @id @default(autoincrement())
+  fullName  String   @db.VarChar(50)
+  gender    Gender   @default(MALE)
+  email     String?  @unique @db.VarChar(100)
+  phone     String   @unique @db.VarChar(15)
+  role      Role
+  status    Status   @default(ACTIVE)
+  createdBy Int?     @db.Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdByUser             User?      @relation("CreatedByRelation", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdUsers              User[]     @relation("CreatedByRelation")
+  meetings                  Meetings[] @relation("Meetings")
+  membersModified           Members[]  @relation("membersModified")
+  labourModifiedBy          Labours[]  @relation("Labours")
+  approvedOrDeclinedMembers Members[]  @relation("ApprovedOrDeclinedRelation")
+  meetingModifiedBy         Meetings[] @relation("MeetingModifiedBy")
+  vehiclesCreatedBy          Vehicles[] @relation("vehiclesCreatedBy")
+  vehiclesModifiedBy        Vehicles[] @relation("vehiclesModifiedBy")
+  @@map("users")
+}
+
+model Members {
+  membershipId          String           @id @default(uuid())
+  approvalStatus        ApprovalStatus   @default(PENDING)
+  membershipStatus      MembershipStatus @default(INACTIVE)
+  nextDueDate           DateTime         @default(now())
+  isExecutive           Bool             @default(FALSE)
+  electricalUscNumber   String           @db.VarChar(225)
+  applicantName         String           @db.VarChar(50)
+  guardianRelation      GuardianRelation @default(SO)
+  guardianName          String           @db.VarChar(50)
+  gender                Gender           @default(MALE)
+  firmName              String           @unique @db.VarChar(50)
+  proprietorName        String           @db.VarChar(50)
+  officeNumber          String           @db.VarChar(15)
+  phoneNumber1          String           @db.VarChar(15)
+  phoneNumber2          String?          @db.VarChar(15)
+  surveyNumber          Int              @unique
+  village               String           @db.VarChar(50)
+  zone                  String           @db.VarChar(50)
+  ownershipType         OwnershipType    @default(OWNER)
+  businessType          BusinessType     @default(OWN_BUSINESS)
+  sanctionedHP          Decimal          @db.Decimal(10, 2)
+  estimatedMaleWorker   Int              @default(0)
+  estimatedFemaleWorker Int              @default(0)
+  modifiedBy            Int?
+  approvedOrDeclinedBy  Int?             @db.Int
+  approvedOrDeclinedAt  DateTime?
+  declineReason         String?          @db.Text
+  createdAt             DateTime         @default(now())
+  modifiedAt            DateTime         @updatedAt
+
+  machineryInformation     MachineryInformations?    @relation("MemberMachinery")
+  branches                 Branches[]                @relation("Branches")
+  complianceDetails        ComplianceDetails?        @relation("ComplianceDetails")
+  similarMembershipInquiry SimilarMembershipInquiry? @relation("SimilarMembershipInquiry")
+  attachments              Attachments?              @relation("Attachments")
+  proposedMember1          Proposer[]                @relation("ProposedMember1")
+  proposedMember2          ExecutiveProposer[]       @relation("ProposedMember2")
+  proposer                 Proposer[]                @relation("ValidProposer")
+  executiveProposer        ExecutiveProposer[]       @relation("ExecutiveProposer")
+  declarations             Declarations?             @relation("Declarations")
+  // membersTransactionHistory MembersTransactionHistory[] @relation("MembersTransactionHistory")
+  labours                  Labours[]                 @relation("Labours")
+  labourHistory            LabourHistory[]           @relation("LabourHistory")
+  meetingAttendees         MeetingAttendees[]        @relation("MeetingAttendees")
+  userModified             User?                     @relation("membersModified", fields: [modifiedBy], references: [id], onDelete: SetNull)
+  // membersPendingChanges    MembersPendingChanges[]   @relation("MembersPendingChanges")
+  approvedOrDeclinedByUser User?                     @relation("ApprovedOrDeclinedRelation", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
+
+  @@map("members")
+}
+
+model MachineryInformations {
+  id                Int      @id @default(autoincrement())
+  membershipId      String?  @unique // Reference to Members
+  branchId          Int?     @unique // Reference to Branches
+  highPolishMachine Int      @default(0) @db.Int
+  sliceMachine      Int      @default(0) @db.Int
+  cuttingMachine    Int      @default(0) @db.Int
+  other             Int      @default(0) @db.Int
+  createdAt         DateTime @default(now())
+  modifiedAt        DateTime @updatedAt
+
+  members  Members?  @relation("MemberMachinery", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  branches Branches? @relation("BranchMachinery", fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@map("machinery_information")
+}
+
+model Branches {
+  id                  Int           @id @default(autoincrement())
+  membershipId        String        @db.VarChar(225)
+  electricalUscNumber String        @unique @db.VarChar(225)
+  surveyNumber        Int           @unique @db.Int
+  village             String        @db.VarChar(50)
+  zone                String        @db.VarChar(50)
+  ownershipType       OwnershipType @default(OWNER)
+  businessType        BusinessType  @default(OWN_BUSINESS)
+  sanctionedHP        Decimal       @db.Decimal(10, 2)
+  createdAt           DateTime      @default(now())
+  modifiedAt          DateTime      @updatedAt
+
+  members              Members                @relation("Branches", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  machineryInformation MachineryInformations? @relation("BranchMachinery")
+
+  @@map("branches")
+}
+
+model ComplianceDetails {
+  id                     Int      @id @default(autoincrement())
+  membershipId           String   @unique
+  gstinNumber            String   @unique @db.VarChar(50)
+  factoryLicenseNumber   String   @unique @db.VarChar(50)
+  tspcbOrderNumber       String   @unique @db.VarChar(50)
+  mdlNumber              String   @unique @db.VarChar(50)
+  udyamCertificateNumber String   @unique @db.VarChar(50)
+  fullAddress            String   @unique @db.VarChar(225)
+  partnerName            String   @db.VarChar(50)
+  contactNumber          String   @db.VarChar(13)
+  AadharNumber           String   @db.VarChar(15)
+  createdAt              DateTime @default(now())
+  modifiedAt             DateTime @updatedAt
+  members                Members  @relation("ComplianceDetails", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+
+  @@map("compliance_details")
+}
+
+model SimilarMembershipInquiry {
+  id                        Int      @id @default(autoincrement())
+  membershipId              String   @unique
+  isSimilarMember           Bool     @default(FALSE)
+  previousMembershipDetails String?  @db.VarChar(225)
+  createdAt                 DateTime @default(now())
+  modifiedAt                DateTime @updatedAt
+  members                   Members  @relation("SimilarMembershipInquiry", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+
+  @@map("similar_membership_inquiry")
+}
+
+model Attachments {
+  id             Int            @id @default(autoincrement())
+  membershipId   String         @unique
+  attachmentType AttachmentType @default(SALE_DEED)
+  filePath       String         @db.VarChar(225)
+  createdAt      DateTime       @default(now())
+  modifiedAt     DateTime       @updatedAt
+  members        Members        @relation("Attachments", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+
+  @@map("attachments")
+}
+
+model Proposer {
+  id            Int           @id @default(autoincrement())
+  membershipId  String        @db.VarChar(225)
+  proposerType  ProposerType?
+  proposerID    String?       @db.VarChar(225)
+  // proposerName     String       @db.VarChar(50)
+  // proposerFirmName String       @db.VarChar(100)
+  // address          String       @db.VarChar(225)
+  signaturePath String?       @db.VarChar(255)
+  createdAt     DateTime      @default(now())
+  modifiedAt    DateTime      @updatedAt
+
+  proposedMember Members  @relation("ProposedMember1", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  proposer       Members? @relation("ValidProposer", fields: [proposerID], references: [membershipId], onDelete: Cascade)
+
+  @@map("proposers")
+}
+
+model ExecutiveProposer {
+  id           Int           @id @default(autoincrement())
+  membershipId String
+  proposerType ProposerType?
+  proposerID   String?       @db.VarChar(225)
+
+  // proposerName     String       @db.VarChar(50)
+  // proposerFirmName String       @db.VarChar(100)
+  // address          String       @db.VarChar(225)
+  signaturePath String?  @db.VarChar(255)
+  createdAt     DateTime @default(now())
+  modifiedAt    DateTime @updatedAt
+
+  proposedMember Members  @relation("ProposedMember2", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  proposer       Members? @relation("ExecutiveProposer", fields: [proposerID], references: [membershipId], onDelete: Cascade)
+
+  @@map("executive_proposers")
+}
+
+model Declarations {
+  id                       Int      @id @default(autoincrement())
+  membershipId             String   @unique
+  agreesToTerms            Bool     @default(FALSE)
+  partnerPhotoPath         String   @db.VarChar(225)
+  applicationSignaturePath String   @db.VarChar(225)
+  createdAt                DateTime @default(now())
+  modifiedAt               DateTime @updatedAt
+  members                  Members  @relation("Declarations", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+
+  @@map("declarations")
+}
+
+// model MembersPendingChanges {
+//   id                   String         @id @default(uuid())
+//   membershipId         String
+//   approvalStatus       ApprovalStatus @default(PENDING)
+//   approvedOrDeclinedBy Int?           @db.Int
+//   updatedData          Json // Store changes as JSON
+//   modifiedBy           Int // User ID of the person making changes
+//   modifiedAt           DateTime       @default(now())
+
+//   member           Members @relation("MembersPendingChanges", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+//   approvedByAdmin  User?   @relation("ApprovedByAdmin", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
+//   modifiedByEditor User    @relation("ModifiedByEditor", fields: [modifiedBy], references: [id], onDelete: Cascade)
+
+//   @@map("members_pending_changes")
+// }
+
+// model MembersTransactionHistory {
+//   id                Int               @id @default(autoincrement())
+//   membershipId      String
+//   amount            Decimal           @db.Decimal(10, 2) // Supports money values
+//   transactionType   TransactionType // ENUM: CREDIT/DEBIT
+//   transactionStatus TransactionStatus // ENUM: SUCCESS/PENDING/FAILED
+//   referenceId       String            @unique @db.VarChar(100) // Optional unique reference ID
+//   createdAt         DateTime          @default(now())
+//   members           Members           @relation("MembersTransactionHistory", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+
+//   @@map("transaction_history")
+// }
+
+model Labours {
+  labourId              String                  @id @default(uuid())
+  fullName              String                  @db.VarChar(100)
+  fatherName            String                  @db.VarChar(100)
+  permanentAddress      String                  @db.VarChar(225)
+  presentAddress        String                  @db.VarChar(225)
+  aadharNumber          String                  @unique @db.VarChar(12)
+  panNumber             String                  @unique @db.VarChar(12)
+  esiNumber             String?                 @db.VarChar(50)
+  employedIn            String                  @db.VarChar(100)
+  employedFrom          DateTime                @default(now())
+  assignedTo            String?                 @db.VarChar(225)
+  onBench               Bool                    @default(TRUE) // true means currently unassigned
+  signaturePath         String                  @db.VarChar(225)
+  fingerPrint           String                  @db.VarChar(225)
+  aadharPhotoPath       String                  @db.VarChar(225)
+  livePhotoPath         String                  @db.VarChar(225)
+  isActive              Bool                    @default(TRUE)
+  createdAt             DateTime                @default(now())
+  modifiedAt            DateTime                @updatedAt
+  modifiedBy            Int?                    @db.Int
+  modifiedByUser        User?                   @relation("Labours", fields: [modifiedBy], references: [id], onDelete: SetNull)
+  laboursAdditionalDocs LaboursAdditionalDocs[] @relation("LaboursAdditionalDocs")
+
+  members          Members?           @relation("Labours", fields: [assignedTo], references: [membershipId], onDelete: Cascade)
+  meetingAttendees MeetingAttendees[] @relation("MeetingAttendees")
+  LabourHistory    LabourHistory[]
+
+  @@map("labours")
+}
+
+model LaboursAdditionalDocs {
+  id          Int      @id @default(autoincrement())
+  labourId    String   @db.VarChar(225)
+  docName     String   @db.VarChar(50)
+  docFilePath String   @db.VarChar(100)
+  createdAt   DateTime @default(now())
+
+  labours Labours @relation("LaboursAdditionalDocs", fields: [labourId], references: [labourId], onDelete: Cascade)
+
+  @@map("labours_additional_docs")
+}
+
+model LabourHistory {
+  Id                Int       @id @default(autoincrement())
+  labourId          String    @db.VarChar(225)
+  assignedTo        String?   @db.VarChar(225)
+  onBench           Bool      @default(TRUE)
+  reasonForTransfer String?   @db.VarChar(225)
+  fromDate          DateTime  @default(now())
+  toDate            DateTime?
+
+  labours Labours  @relation(fields: [labourId], references: [labourId], onDelete: Cascade)
+  members Members? @relation("LabourHistory", fields: [assignedTo], references: [membershipId], onDelete: Cascade)
+
+  @@map("labour_history")
+}
+
+model Vehicles {
+  vehicleId        String             @id @default(uuid())
+  isActive         Bool               @default(TRUE)
+  ownerName        String             @db.VarChar(50)
+  phoneNumber      String             @db.VarChar(13)
+  emailId          String             @db.VarChar(50)
+  vehicleNumber    String             @unique @db.VarChar(20)
+  createdBy        Int?               @db.Int
+  modifiedBy       Int?               @db.Int
+  vehicleType      String?             @db.VarChar(50)
+  createdAt        DateTime           @default(now())
+  modifiedAt       DateTime           @updatedAt
+  tripRecords      TripRecords[]      @relation("TripRecord")
+  meetingAttendees MeetingAttendees[] @relation("MeetingAttendees")
+  userCreated      User?             @relation("vehiclesCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  userModified     User?             @relation("vehiclesModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
+  @@map("vehicles")
+}
+
+model TripRecords {
+  id            Int      @id @default(autoincrement())
+  vehicleId     String   @db.VarChar(225)
+  route         String
+  amountPerTrip Float
+  numberOfTrips Int
+  balanceAmount Float    @default(0.0)
+  amountPaid    Float    @default(0.0)
+  createdAt     DateTime @default(now())
+  modifiedAt    DateTime @updatedAt
+
+  vehicles Vehicles? @relation("TripRecord", fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
+
+  @@map("trip_record")
+}
+
+model Meetings {
+  id        String        @id @default(uuid())
+  title     String        @db.VarChar(255)
+  agenda    String?       @db.Text
+  notes     String?       @db.Text
+  startTime DateTime
+  endTime   DateTime
+  location  String?       @db.VarChar(255)
+  status    MeetingStatus @default(SCHEDULED)
+  createdBy Int           @db.Int
+  attendees Json          @db.Json // List of members, vehicles, and labours
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  modifiedBy Int?      @db.Int
+  modifiedByUser User?      @relation("MeetingModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
+
+  User      User               @relation("Meetings", fields: [createdBy], references: [id], onDelete: Cascade)
+  meetingAttendees MeetingAttendees[] @relation("MeetingAttendees")
+  // meetingNotes MeetingNotes[]
+
+  @@map("meetings")
+}
+
+model MeetingAttendees {
+  id        Int      @id @default(autoincrement())
+  meetingId String   @db.VarChar(225)
+  memberId  String?  @db.VarChar(225) // Reference to Members
+  vehicleId String?  @db.VarChar(225) // Reference to Vehicles
+  labourId  String?  @db.VarChar(225) // Reference to Labours
+  isCustom  Bool     @default(FALSE) // True if manually added
+  createdAt DateTime @default(now())
+
+  meeting Meetings  @relation("MeetingAttendees", fields: [meetingId], references: [id], onDelete: Cascade)
+  member  Members?  @relation("MeetingAttendees", fields: [memberId], references: [membershipId], onDelete: Cascade)
+  vehicle Vehicles? @relation("MeetingAttendees", fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
+  labour  Labours?  @relation("MeetingAttendees", fields: [labourId], references: [labourId], onDelete: Cascade)
+
+  @@unique([meetingId, memberId, vehicleId]) // Ensures a unique entry per meeting
+  @@map("meeting_attendees")
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum Role {
+  ADMIN
+  ADMIN_VIEWER
+  TSMWA_EDITOR
+  TSMWA_VIEWER
+  TQMA_EDITOR
+  TQMA_VIEWER
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+enum GuardianRelation {
+  SO // S/O (Son of)
+  DO // D/O (Daughter of)
+  WO // W/O (Wife of)
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+}
+
+enum OwnershipType {
+  OWNER
+  TENANT
+  TRADER
+}
+
+enum BusinessType {
+  OWN_BUSINESS
+  FACTORY_ON_LEASE
+}
+
+enum Bool {
+  TRUE
+  FALSE
+}
+
+enum AttachmentType {
+  SALE_DEED
+  ELECTRICITY_BILL
+  RENTAL_DEED
+  PARTNERSHIP_DEED
+  PHOTOS
+  DOCUMENTS
+}
+
+enum ProposerType {
+  FACTORY_OWNER
+  EXECUTIVE_MEMBER
+}
+
+enum TransactionStatus {
+  SUCCESS
+  PENDING
+  FAILED
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
