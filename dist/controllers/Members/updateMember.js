@@ -18,53 +18,69 @@ const __1 = require("../..");
 const root_1 = require("../../exceptions/root");
 const bad_request_1 = require("../../exceptions/bad-request");
 const lodash_1 = __importDefault(require("lodash"));
-const otp_service_1 = __importDefault(require("../../services/otp/otp.service"));
 const updateMember = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     const partialUpdateData = UpdateMember_1.MemberPartialUpdateSchema.parse(req.body);
     try {
-        if (["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
-            const existingMember = yield __1.prismaClient.members.findUnique({
-                where: { membershipId: partialUpdateData.membershipId },
-                include: {
-                    machineryInformation: true,
-                    branches: { include: { machineryInformation: true } },
-                    complianceDetails: true,
-                    similarMembershipInquiry: true,
-                    attachments: true,
-                    proposer: true,
-                    executiveProposer: true,
-                    declarations: true,
+        const existingMember = yield __1.prismaClient.members.findUnique({
+            where: { membershipId: partialUpdateData.membershipId },
+            include: {
+                machineryInformation: true,
+                branches: { include: { machineryInformation: true } },
+                complianceDetails: true,
+                similarMembershipInquiry: true,
+                attachments: true,
+                proposer: true,
+                executiveProposer: true,
+                declarations: true,
+            },
+        });
+        if (!existingMember) {
+            throw new bad_request_1.BadRequestsException("Member not found", root_1.ErrorCode.NOT_FOUND);
+        }
+        const changes = calculateFieldDifferences(existingMember, partialUpdateData);
+        if (Object.keys(changes).length === 0) {
+            throw new bad_request_1.BadRequestsException("No changes detected", root_1.ErrorCode.NO_DATA_PROVIDED);
+        }
+        if (["TSMWA_EDITOR", "TQMA_EDITOR"].includes(req.user.role)) {
+            // Save pending changes only
+            console.log("userID", req.user.userId);
+            const pendingChange = yield __1.prismaClient.membersPendingChanges.create({
+                data: {
+                    membershipId: partialUpdateData.membershipId,
+                    updatedData: changes,
+                    modifiedBy: req.user.userId,
                 },
             });
-            if (!existingMember) {
-                throw new bad_request_1.BadRequestsException("Member not found", root_1.ErrorCode.NOT_FOUND);
-            }
-            const changes = calculateFieldDifferences(existingMember, partialUpdateData);
-            // Check if there are any changes to be made
-            if (Object.keys(changes).length === 0) {
-                throw new bad_request_1.BadRequestsException("No changes detected", root_1.ErrorCode.NO_DATA_PROVIDED);
-            }
-            if (req.user.role === "TSMWA_EDITOR" || req.user.role === "TQMA_EDITOR") {
-                const otp = req.headers["x-otp-code"];
-                if (!otp) {
-                    return next(new bad_request_1.BadRequestsException("OTP code is required", root_1.ErrorCode.INVALID_INPUT));
-                }
-                const isValid = otp_service_1.default.verifyOTP(req.user.phone, otp);
-                if (!isValid) {
-                    return next(new bad_request_1.BadRequestsException("Invalid or expired OTP", root_1.ErrorCode.INVALID_INPUT));
-                }
-            }
-            // Save approved record in pending changes
+            return res.json({
+                message: "Changes submitted for approval",
+                pendingChange,
+            });
+        }
+        if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) === "ADMIN") {
             const result = yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
-                return yield applyChanges(prisma, partialUpdateData.membershipId, changes, req.user.userId);
+                var _a;
+                // Save approved record in pending changes
+                yield prisma.membersPendingChanges.create({
+                    data: {
+                        membershipId: partialUpdateData.membershipId,
+                        updatedData: changes,
+                        modifiedBy: req.user.userId,
+                        approvalStatus: "APPROVED",
+                        approvedOrDeclinedBy: (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId,
+                    },
+                });
+                // Apply update to Member schema
+                yield applyChanges(prisma, partialUpdateData.membershipId, changes, req.user.userId);
+                return { message: "Changes approved and applied" };
             }));
             return res.json(result);
         }
-        return next(new bad_request_1.BadRequestsException("Invalid user role", root_1.ErrorCode.UNAUTHORIZED));
+        throw new bad_request_1.BadRequestsException("Invalid user role", root_1.ErrorCode.UNAUTHORIZED);
     }
     catch (e) {
-        console.error("Error in updateMember:", e);
-        return next(new bad_request_1.BadRequestsException(e.message, root_1.ErrorCode.BAD_REQUEST));
+        console.log(e);
+        next(e);
     }
 });
 exports.updateMember = updateMember;
@@ -77,7 +93,7 @@ function calculateFieldDifferences(existing, incoming) {
     }
     return result;
 }
-function applyChanges(prisma, membershipId, changes, userId) {
+function applyChanges(prisma, membershipId, changes, adminId) {
     return __awaiter(this, void 0, void 0, function* () {
         if (Object.keys(changes).length === 0)
             return;
@@ -136,9 +152,8 @@ function applyChanges(prisma, membershipId, changes, userId) {
         if (Object.keys(memberFields).length > 0) {
             yield prisma.members.update({
                 where: { membershipId },
-                data: Object.assign(Object.assign({}, memberFields), { approvalStatus: "APPROVED", membershipStatus: "ACTIVE", approvedOrDeclinedBy: userId, approvedOrDeclinedAt: new Date(), nextDueDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)) }),
+                data: Object.assign(Object.assign({}, memberFields), { approvalStatus: "APPROVED", membershipStatus: "ACTIVE", approvedOrDeclinedBy: adminId, approvedOrDeclinedAt: new Date(), nextDueDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)) }),
             });
         }
-        return { message: "Changes applied successfully" };
     });
 }

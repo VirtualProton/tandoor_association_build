@@ -20,7 +20,6 @@ const lodash_1 = __importDefault(require("lodash"));
 const updateLabours_1 = require("../../schema/labours/updateLabours");
 const updateLabour = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const partialUpdateData = updateLabours_1.LabourPartialUpdateSchema.parse(req.body);
-    console.log("Partial Update Data:", partialUpdateData);
     try {
         if (["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
             const existingLabour = yield __1.prismaClient.labours.findUnique({
@@ -88,7 +87,6 @@ function applyLabourChanges(prisma, labourId, changes, userId) {
         }
         const labourFields = lodash_1.default.omit(changes, ["laboursAdditionalDocs"]);
         let data = Object.assign(Object.assign({}, labourFields), { modifiedBy: userId, approvedOrDeclinedAt: new Date() });
-        console.log("Labour Fields:", data);
         if (Object.keys(labourFields).length > 0) {
             yield prisma.labours.update({
                 where: { labourId },
