@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addMember = exports.validateUSCNumber = void 0;
 const __1 = require("../..");
-const AddMember_1 = require("../../schema/members/AddMember");
+const addMember_1 = require("../../schema/members/addMember");
 const bad_request_1 = require("../../exceptions/bad-request");
 const root_1 = require("../../exceptions/root");
 // import { testS3Operations } from "../../services/s3Bucket/s3test";
@@ -58,7 +58,7 @@ const validateUSCNumber = (req, res, next) => __awaiter(void 0, void 0, void 0, 
 });
 exports.validateUSCNumber = validateUSCNumber;
 const addMember = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const memberDetails = AddMember_1.MemberSignUpSchema.parse(req.body);
+    const memberDetails = addMember_1.MemberSignUpSchema.parse(req.body);
     try {
         if (!["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
             return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
@@ -79,7 +79,7 @@ const addMember = (req, res, next) => __awaiter(void 0, void 0, void 0, function
             const executiveProposer = yield addExecutiveProposersHandler(prisma, newMember.membershipId, memberDetails.executiveProposer);
             const declarations = yield addDeclarationsHandler(prisma, newMember.membershipId, memberDetails.declarations);
             return { newMember, machineryInformations, branches, complianceDetails, similarMembershipInquiry, attachments, proposer, executiveProposer, declarations };
-        }));
+        }), { timeout: 20000 });
         res.status(200).json(result);
     }
     catch (e) {
@@ -90,32 +90,37 @@ exports.addMember = addMember;
 const addMemberHandler = (prisma, memberDetails, user) => __awaiter(void 0, void 0, void 0, function* () {
     const data = {
         electricalUscNumber: memberDetails.electricalUscNumber,
+        scNumber: memberDetails.scNumber,
         applicantName: memberDetails.applicantName,
-        guardianRelation: memberDetails.guardianRelation,
-        guardianName: memberDetails.guardianName,
+        relation: memberDetails.relation,
+        relativeName: memberDetails.relativeName,
         gender: memberDetails.gender,
         firmName: memberDetails.firmName,
-        proprietorName: memberDetails.proprietorName,
-        officeNumber: memberDetails.officeNumber,
+        partnerName: memberDetails.partnerName,
+        partnerStatus: memberDetails.partnerStatus,
+        partnerType: memberDetails.partnerType,
         phoneNumber1: memberDetails.phoneNumber1,
         phoneNumber2: memberDetails.phoneNumber2,
         surveyNumber: memberDetails.surveyNumber,
         village: memberDetails.village,
         zone: memberDetails.zone,
-        ownershipType: memberDetails.ownershipType,
-        businessType: memberDetails.businessType,
+        mandal: memberDetails.mandal,
+        district: memberDetails.district,
+        state: memberDetails.state,
+        pinCode: memberDetails.pinCode,
         sanctionedHP: memberDetails.sanctionedHP,
         estimatedMaleWorker: memberDetails.estimatedMaleWorker,
         estimatedFemaleWorker: memberDetails.estimatedFemaleWorker,
     };
     if ((user === null || user === void 0 ? void 0 : user.role) === "ADMIN") {
-        let nextDueDate = new Date();
-        nextDueDate = new Date(nextDueDate); // Clone approvedDate
-        nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); // Set next year
+        // let nextDueDate = new Date();
+        // nextDueDate = new Date(nextDueDate); // Clone approvedDate
+        // nextDueDate.setFullYear(nextDueDate.getFullYear() + 1); // Set next year
         Object.assign(data, {
             approvalStatus: "APPROVED",
+            isPaymentDue: "FALSE",
             membershipStatus: "ACTIVE",
-            nextDueDate: nextDueDate,
+            nextDueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
             approvedOrDeclinedBy: user.userId,
             approvedOrDeclinedAt: new Date(),
         });
@@ -127,9 +132,9 @@ const addMachineryInformationsHandler = (prisma, membershipId, machineryInformat
         data: {
             membershipId,
             highPolishMachine: machineryInformations.highPolishMachine,
-            sliceMachine: machineryInformations.highPolishMachine,
-            cuttingMachine: machineryInformations.highPolishMachine,
-            other: machineryInformations.highPolishMachine,
+            sliceMachine: machineryInformations.sliceMachine,
+            cuttingMachine: machineryInformations.cuttingMachine,
+            other: machineryInformations.other,
         },
     });
 });
@@ -137,14 +142,13 @@ const addBranchesHandler = (prisma, membershipId, branches) => __awaiter(void 0,
     return yield Promise.all(branches.map((branch) => __awaiter(void 0, void 0, void 0, function* () {
         const newBranch = yield prisma.branches.create({
             data: {
-                membershipId: membershipId,
+                membershipId,
                 electricalUscNumber: branch.electricalUscNumber,
-                surveyNumber: branch.surveyNumber,
-                village: branch.village,
-                zone: branch.zone,
-                ownershipType: branch.ownershipType,
-                businessType: branch.businessType,
+                scNumber: branch.scNumber,
+                proprietorType: branch.proprietorType,
+                proprietorStatus: branch.proprietorStatus,
                 sanctionedHP: branch.sanctionedHP,
+                placeOfBusiness: branch.placeOfBusiness,
             },
         });
         const machineryInformations = yield prisma.machineryInformations.create({
@@ -152,9 +156,9 @@ const addBranchesHandler = (prisma, membershipId, branches) => __awaiter(void 0,
                 // membershipId: membershipId,
                 branchId: newBranch.id,
                 highPolishMachine: branch.machineryInformations.highPolishMachine,
-                sliceMachine: branch.machineryInformations.highPolishMachine,
-                cuttingMachine: branch.machineryInformations.highPolishMachine,
-                other: branch.machineryInformations.highPolishMachine,
+                sliceMachine: branch.machineryInformations.sliceMachine,
+                cuttingMachine: branch.machineryInformations.cuttingMachine,
+                other: branch.machineryInformations.other,
             },
         });
         newBranch['machineryInformations'] = machineryInformations;
@@ -163,43 +167,30 @@ const addBranchesHandler = (prisma, membershipId, branches) => __awaiter(void 0,
 });
 const addComplianceDetailsHandler = (prisma, membershipId, complianceDetails) => __awaiter(void 0, void 0, void 0, function* () {
     return yield prisma.complianceDetails.create({
-        data: {
-            membershipId,
-            gstinNumber: complianceDetails.gstinNumber,
-            factoryLicenseNumber: complianceDetails.factoryLicenseNumber,
-            tspcbOrderNumber: complianceDetails.tspcbOrderNumber,
-            mdlNumber: complianceDetails.mdlNumber,
-            udyamCertificateNumber: complianceDetails.udyamCertificateNumber,
-            fullAddress: complianceDetails.fullAddress,
-            partnerName: complianceDetails.partnerName,
-            contactNumber: complianceDetails.contactNumber,
-            AadharNumber: complianceDetails.AadharNumber,
-        },
+        data: Object.assign({ membershipId }, complianceDetails),
     });
 });
 const addSimilarMembershipInquiryHandler = (prisma, membershipId, similarMembershipInquiry) => __awaiter(void 0, void 0, void 0, function* () {
     return yield prisma.similarMembershipInquiry.create({
-        data: {
-            membershipId,
-            isSimilarMember: similarMembershipInquiry.isSimilarMember,
-            previousMembershipDetails: similarMembershipInquiry.isSimilarMember,
-        },
+        data: Object.assign({ membershipId }, similarMembershipInquiry),
     });
 });
 const addAttachmentsHandler = (prisma, membershipId, attachments) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield prisma.attachments.create({
-        data: {
-            membershipId,
-            attachmentType: attachments.attachmentType,
-            filePath: attachments.filePath,
-        },
-    });
+    return yield Promise.all(attachments.map((attachment) => __awaiter(void 0, void 0, void 0, function* () {
+        return yield prisma.attachments.create({
+            data: {
+                membershipId,
+                documentName: attachment.documentName,
+                documentPath: attachment.documentPath,
+            },
+        });
+    })));
 });
 const addProposerHandler = (prisma, membershipId, proposers) => __awaiter(void 0, void 0, void 0, function* () {
     return yield prisma.proposer.create({
         data: {
             membershipId,
-            proposerType: proposers.proposerId,
+            proposerID: proposers.proposerID,
             signaturePath: proposers.signaturePath,
         },
     });
@@ -208,7 +199,7 @@ const addExecutiveProposersHandler = (prisma, membershipId, executiveProposer) =
     return yield prisma.executiveProposer.create({
         data: {
             membershipId,
-            proposerType: executiveProposer.proposerId,
+            proposerID: executiveProposer.proposerID,
             signaturePath: executiveProposer.signaturePath,
         }
     });
@@ -218,8 +209,8 @@ const addDeclarationsHandler = (prisma, membershipId, declarations) => __awaiter
         data: {
             membershipId,
             agreesToTerms: declarations.agreesToTerms,
-            partnerPhotoPath: declarations.partnerPhotoPath,
-            applicationSignaturePath: declarations.partnerPhotoPath,
+            membershipFormPath: declarations.membershipFormPath,
+            applicationSignaturePath: declarations.applicationSignaturePath,
         },
     });
 });

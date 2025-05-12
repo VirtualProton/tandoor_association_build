@@ -22,25 +22,30 @@ CREATE TABLE `members` (
     `approvalStatus` ENUM('PENDING', 'APPROVED', 'DECLINED') NOT NULL DEFAULT 'PENDING',
     `membershipStatus` ENUM('ACTIVE', 'INACTIVE', 'CANCELLED') NOT NULL DEFAULT 'INACTIVE',
     `nextDueDate` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `isExecutive` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'FALSE',
+    `isPaymentDue` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'TRUE',
     `electricalUscNumber` VARCHAR(225) NOT NULL,
+    `scNumber` VARCHAR(225) NOT NULL,
     `applicantName` VARCHAR(50) NOT NULL,
-    `guardianRelation` ENUM('SO', 'DO', 'WO') NOT NULL DEFAULT 'SO',
-    `guardianName` VARCHAR(50) NOT NULL,
+    `relation` ENUM('SO', 'DO', 'WO') NOT NULL DEFAULT 'SO',
+    `relativeName` VARCHAR(50) NOT NULL,
     `gender` ENUM('MALE', 'FEMALE', 'OTHER') NOT NULL DEFAULT 'MALE',
     `firmName` VARCHAR(50) NOT NULL,
-    `proprietorName` VARCHAR(50) NOT NULL,
-    `officeNumber` VARCHAR(15) NOT NULL,
+    `partnerName` VARCHAR(50) NOT NULL,
+    `partnerStatus` ENUM('OWNER', 'TENANT', 'TRADER') NOT NULL DEFAULT 'OWNER',
+    `partnerType` ENUM('OWNED', 'RENTED', 'TRADING', 'OTHER') NOT NULL DEFAULT 'OWNED',
+    `sanctionedHP` DECIMAL(10, 2) NOT NULL,
     `phoneNumber1` VARCHAR(15) NOT NULL,
     `phoneNumber2` VARCHAR(15) NULL,
     `surveyNumber` INTEGER NOT NULL,
     `village` VARCHAR(50) NOT NULL,
     `zone` VARCHAR(50) NOT NULL,
-    `ownershipType` ENUM('OWNER', 'TENANT', 'TRADER') NOT NULL DEFAULT 'OWNER',
-    `businessType` ENUM('OWN_BUSINESS', 'FACTORY_ON_LEASE') NOT NULL DEFAULT 'OWN_BUSINESS',
-    `sanctionedHP` DECIMAL(10, 2) NOT NULL,
+    `mandal` VARCHAR(50) NOT NULL,
+    `district` VARCHAR(50) NOT NULL,
+    `state` VARCHAR(50) NOT NULL,
+    `pinCode` VARCHAR(10) NOT NULL,
     `estimatedMaleWorker` INTEGER NOT NULL DEFAULT 0,
     `estimatedFemaleWorker` INTEGER NOT NULL DEFAULT 0,
+    `modifiedBy` INTEGER NULL,
     `approvedOrDeclinedBy` INTEGER NULL,
     `approvedOrDeclinedAt` DATETIME(3) NULL,
     `declineReason` TEXT NULL,
@@ -74,17 +79,16 @@ CREATE TABLE `branches` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `membershipId` VARCHAR(225) NOT NULL,
     `electricalUscNumber` VARCHAR(225) NOT NULL,
-    `surveyNumber` INTEGER NOT NULL,
-    `village` VARCHAR(50) NOT NULL,
-    `zone` VARCHAR(50) NOT NULL,
-    `ownershipType` ENUM('OWNER', 'TENANT', 'TRADER') NOT NULL DEFAULT 'OWNER',
-    `businessType` ENUM('OWN_BUSINESS', 'FACTORY_ON_LEASE') NOT NULL DEFAULT 'OWN_BUSINESS',
+    `scNumber` VARCHAR(225) NOT NULL,
+    `proprietorType` VARCHAR(50) NOT NULL,
+    `proprietorStatus` VARCHAR(50) NOT NULL,
+    `placeOfBusiness` VARCHAR(50) NOT NULL,
     `sanctionedHP` DECIMAL(10, 2) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `modifiedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `branches_electricalUscNumber_key`(`electricalUscNumber`),
-    UNIQUE INDEX `branches_surveyNumber_key`(`surveyNumber`),
+    UNIQUE INDEX `branches_scNumber_key`(`scNumber`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -92,25 +96,33 @@ CREATE TABLE `branches` (
 CREATE TABLE `compliance_details` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `membershipId` VARCHAR(191) NOT NULL,
-    `gstinNumber` VARCHAR(50) NOT NULL,
+    `gstInNumber` VARCHAR(50) NOT NULL,
+    `gstInCertificatePath` VARCHAR(225) NOT NULL,
     `factoryLicenseNumber` VARCHAR(50) NOT NULL,
+    `factoryLicensePath` VARCHAR(225) NOT NULL,
     `tspcbOrderNumber` VARCHAR(50) NOT NULL,
+    `tspcbCertificatePath` VARCHAR(225) NOT NULL,
     `mdlNumber` VARCHAR(50) NOT NULL,
+    `mdlCertificatePath` VARCHAR(225) NOT NULL,
     `udyamCertificateNumber` VARCHAR(50) NOT NULL,
+    `udyamCertificatePath` VARCHAR(225) NOT NULL,
     `fullAddress` VARCHAR(225) NOT NULL,
     `partnerName` VARCHAR(50) NOT NULL,
     `contactNumber` VARCHAR(13) NOT NULL,
     `AadharNumber` VARCHAR(15) NOT NULL,
+    `emailId` VARCHAR(50) NOT NULL,
+    `panNumber` VARCHAR(12) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `modifiedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `compliance_details_membershipId_key`(`membershipId`),
-    UNIQUE INDEX `compliance_details_gstinNumber_key`(`gstinNumber`),
+    UNIQUE INDEX `compliance_details_gstInNumber_key`(`gstInNumber`),
     UNIQUE INDEX `compliance_details_factoryLicenseNumber_key`(`factoryLicenseNumber`),
     UNIQUE INDEX `compliance_details_tspcbOrderNumber_key`(`tspcbOrderNumber`),
     UNIQUE INDEX `compliance_details_mdlNumber_key`(`mdlNumber`),
     UNIQUE INDEX `compliance_details_udyamCertificateNumber_key`(`udyamCertificateNumber`),
     UNIQUE INDEX `compliance_details_fullAddress_key`(`fullAddress`),
+    UNIQUE INDEX `compliance_details_panNumber_key`(`panNumber`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -118,8 +130,10 @@ CREATE TABLE `compliance_details` (
 CREATE TABLE `similar_membership_inquiry` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `membershipId` VARCHAR(191) NOT NULL,
-    `isSimilarMember` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'FALSE',
-    `previousMembershipDetails` VARCHAR(225) NULL,
+    `is_member_of_similar_org` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'FALSE',
+    `has_applied_earlier` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'FALSE',
+    `is_valid_member` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'FALSE',
+    `is_executive_member` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'FALSE',
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `modifiedAt` DATETIME(3) NOT NULL,
 
@@ -130,13 +144,12 @@ CREATE TABLE `similar_membership_inquiry` (
 -- CreateTable
 CREATE TABLE `attachments` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `membershipId` VARCHAR(191) NOT NULL,
-    `attachmentType` ENUM('SALE_DEED', 'ELECTRICITY_BILL', 'RENTAL_DEED', 'PARTNERSHIP_DEED', 'PHOTOS', 'DOCUMENTS') NOT NULL DEFAULT 'SALE_DEED',
-    `filePath` VARCHAR(225) NOT NULL,
+    `membershipId` VARCHAR(225) NOT NULL,
+    `documentName` VARCHAR(50) NOT NULL,
+    `documentPath` VARCHAR(225) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `modifiedAt` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `attachments_membershipId_key`(`membershipId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -144,7 +157,6 @@ CREATE TABLE `attachments` (
 CREATE TABLE `proposers` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `membershipId` VARCHAR(225) NOT NULL,
-    `proposerType` ENUM('FACTORY_OWNER', 'EXECUTIVE_MEMBER') NULL,
     `proposerID` VARCHAR(225) NULL,
     `signaturePath` VARCHAR(255) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -157,7 +169,6 @@ CREATE TABLE `proposers` (
 CREATE TABLE `executive_proposers` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `membershipId` VARCHAR(191) NOT NULL,
-    `proposerType` ENUM('FACTORY_OWNER', 'EXECUTIVE_MEMBER') NULL,
     `proposerID` VARCHAR(225) NULL,
     `signaturePath` VARCHAR(255) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -171,7 +182,7 @@ CREATE TABLE `declarations` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `membershipId` VARCHAR(191) NOT NULL,
     `agreesToTerms` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'FALSE',
-    `partnerPhotoPath` VARCHAR(225) NOT NULL,
+    `membershipFormPath` VARCHAR(225) NOT NULL,
     `applicationSignaturePath` VARCHAR(225) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `modifiedAt` DATETIME(3) NOT NULL,
@@ -214,6 +225,7 @@ CREATE TABLE `labours` (
     `isActive` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'TRUE',
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `modifiedAt` DATETIME(3) NOT NULL,
+    `modifiedBy` INTEGER NULL,
 
     UNIQUE INDEX `labours_aadharNumber_key`(`aadharNumber`),
     UNIQUE INDEX `labours_panNumber_key`(`panNumber`),
@@ -227,6 +239,19 @@ CREATE TABLE `labours_additional_docs` (
     `docName` VARCHAR(50) NOT NULL,
     `docFilePath` VARCHAR(100) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `labours_pending_changes` (
+    `id` VARCHAR(191) NOT NULL,
+    `labourId` VARCHAR(191) NOT NULL,
+    `approvalStatus` ENUM('PENDING', 'APPROVED', 'DECLINED') NOT NULL DEFAULT 'PENDING',
+    `approvedOrDeclinedBy` INTEGER NULL,
+    `updatedData` JSON NOT NULL,
+    `modifiedBy` INTEGER NOT NULL,
+    `modifiedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -252,6 +277,9 @@ CREATE TABLE `vehicles` (
     `phoneNumber` VARCHAR(13) NOT NULL,
     `emailId` VARCHAR(50) NOT NULL,
     `vehicleNumber` VARCHAR(20) NOT NULL,
+    `createdBy` INTEGER NULL,
+    `modifiedBy` INTEGER NULL,
+    `vehicleType` VARCHAR(50) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `modifiedAt` DATETIME(3) NOT NULL,
 
@@ -285,8 +313,10 @@ CREATE TABLE `meetings` (
     `location` VARCHAR(255) NULL,
     `status` ENUM('SCHEDULED', 'COMPLETED', 'CANCELLED') NOT NULL DEFAULT 'SCHEDULED',
     `createdBy` INTEGER NOT NULL,
+    `attendees` JSON NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
+    `modifiedBy` INTEGER NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -309,7 +339,10 @@ CREATE TABLE `meeting_attendees` (
 ALTER TABLE `users` ADD CONSTRAINT `users_createdBy_fkey` FOREIGN KEY (`createdBy`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `members` ADD CONSTRAINT `members_approvedOrDeclinedBy_fkey` FOREIGN KEY (`approvedOrDeclinedBy`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `members` ADD CONSTRAINT `members_modifiedBy_fkey` FOREIGN KEY (`modifiedBy`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `members` ADD CONSTRAINT `members_approvedOrDeclinedBy_fkey` FOREIGN KEY (`approvedOrDeclinedBy`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `machinery_information` ADD CONSTRAINT `machinery_information_membershipId_fkey` FOREIGN KEY (`membershipId`) REFERENCES `members`(`membershipId`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -354,10 +387,22 @@ ALTER TABLE `members_pending_changes` ADD CONSTRAINT `members_pending_changes_ap
 ALTER TABLE `members_pending_changes` ADD CONSTRAINT `members_pending_changes_modifiedBy_fkey` FOREIGN KEY (`modifiedBy`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `labours` ADD CONSTRAINT `labours_modifiedBy_fkey` FOREIGN KEY (`modifiedBy`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `labours` ADD CONSTRAINT `labours_assignedTo_fkey` FOREIGN KEY (`assignedTo`) REFERENCES `members`(`membershipId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `labours_additional_docs` ADD CONSTRAINT `labours_additional_docs_labourId_fkey` FOREIGN KEY (`labourId`) REFERENCES `labours`(`labourId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `labours_pending_changes` ADD CONSTRAINT `labours_pending_changes_labourId_fkey` FOREIGN KEY (`labourId`) REFERENCES `labours`(`labourId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `labours_pending_changes` ADD CONSTRAINT `labours_pending_changes_approvedOrDeclinedBy_fkey` FOREIGN KEY (`approvedOrDeclinedBy`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `labours_pending_changes` ADD CONSTRAINT `labours_pending_changes_modifiedBy_fkey` FOREIGN KEY (`modifiedBy`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `labour_history` ADD CONSTRAINT `labour_history_labourId_fkey` FOREIGN KEY (`labourId`) REFERENCES `labours`(`labourId`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -366,7 +411,16 @@ ALTER TABLE `labour_history` ADD CONSTRAINT `labour_history_labourId_fkey` FOREI
 ALTER TABLE `labour_history` ADD CONSTRAINT `labour_history_assignedTo_fkey` FOREIGN KEY (`assignedTo`) REFERENCES `members`(`membershipId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `vehicles` ADD CONSTRAINT `vehicles_createdBy_fkey` FOREIGN KEY (`createdBy`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `vehicles` ADD CONSTRAINT `vehicles_modifiedBy_fkey` FOREIGN KEY (`modifiedBy`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `trip_record` ADD CONSTRAINT `trip_record_vehicleId_fkey` FOREIGN KEY (`vehicleId`) REFERENCES `vehicles`(`vehicleId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `meetings` ADD CONSTRAINT `meetings_modifiedBy_fkey` FOREIGN KEY (`modifiedBy`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `meetings` ADD CONSTRAINT `meetings_createdBy_fkey` FOREIGN KEY (`createdBy`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

@@ -26,65 +26,77 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  createdByUser             User?      @relation("CreatedByRelation", fields: [createdBy], references: [id], onDelete: SetNull)
-  createdUsers              User[]     @relation("CreatedByRelation")
-  meetings                  Meetings[] @relation("Meetings")
-  membersModified           Members[]  @relation("membersModified")
-  labourModifiedBy          Labours[]  @relation("Labours")
-  approvedOrDeclinedMembers Members[]  @relation("ApprovedOrDeclinedRelation")
-  meetingModifiedBy         Meetings[] @relation("MeetingModifiedBy")
-  vehiclesCreatedBy          Vehicles[] @relation("vehiclesCreatedBy")
-  vehiclesModifiedBy        Vehicles[] @relation("vehiclesModifiedBy")
+  createdByUser             User?                   @relation("CreatedByRelation", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdUsers              User[]                  @relation("CreatedByRelation")
+  meetings                  Meetings[]              @relation("Meetings")
+  membersModified           Members[]               @relation("membersModified")
+  labourModifiedBy          Labours[]               @relation("Labours")
+  approvedOrDeclinedMembers Members[]               @relation("ApprovedOrDeclinedRelation")
+  meetingModifiedBy         Meetings[]              @relation("MeetingModifiedBy")
+  vehiclesCreatedBy         Vehicles[]              @relation("vehiclesCreatedBy")
+  vehiclesModifiedBy        Vehicles[]              @relation("vehiclesModifiedBy")
+  memberChangesApprovedBy   MembersPendingChanges[] @relation("memberChangesApprovedBy")
+  memberModifiedByEditor    MembersPendingChanges[] @relation("memberModifiedByEditor")
+  labourModifiedByEditor    LaboursPendingChanges[] @relation("LabourModifiedByEditor")
+  labourChangesApprovedBy   LaboursPendingChanges[] @relation("labourChangesApprovedBy")
+
   @@map("users")
 }
 
 model Members {
-  membershipId          String           @id @default(uuid())
-  approvalStatus        ApprovalStatus   @default(PENDING)
-  membershipStatus      MembershipStatus @default(INACTIVE)
-  nextDueDate           DateTime         @default(now())
-  isExecutive           Bool             @default(FALSE)
-  electricalUscNumber   String           @db.VarChar(225)
-  applicantName         String           @db.VarChar(50)
-  guardianRelation      GuardianRelation @default(SO)
-  guardianName          String           @db.VarChar(50)
-  gender                Gender           @default(MALE)
-  firmName              String           @unique @db.VarChar(50)
-  proprietorName        String           @db.VarChar(50)
-  officeNumber          String           @db.VarChar(15)
-  phoneNumber1          String           @db.VarChar(15)
-  phoneNumber2          String?          @db.VarChar(15)
-  surveyNumber          Int              @unique
-  village               String           @db.VarChar(50)
-  zone                  String           @db.VarChar(50)
-  ownershipType         OwnershipType    @default(OWNER)
-  businessType          BusinessType     @default(OWN_BUSINESS)
-  sanctionedHP          Decimal          @db.Decimal(10, 2)
-  estimatedMaleWorker   Int              @default(0)
-  estimatedFemaleWorker Int              @default(0)
-  modifiedBy            Int?
-  approvedOrDeclinedBy  Int?             @db.Int
-  approvedOrDeclinedAt  DateTime?
-  declineReason         String?          @db.Text
-  createdAt             DateTime         @default(now())
-  modifiedAt            DateTime         @updatedAt
+  membershipId        String           @id @default(uuid())
+  approvalStatus      ApprovalStatus   @default(PENDING)
+  membershipStatus    MembershipStatus @default(INACTIVE)
+  nextDueDate         DateTime         @default(now())
+  isPaymentDue         Bool             @default(TRUE)
+  // isExecutive         Bool             @default(FALSE)
+  electricalUscNumber String           @db.VarChar(225)
+  scNumber            String           @db.VarChar(225)
+  applicantName       String           @db.VarChar(50)
+  relation            GuardianRelation @default(SO)
+  relativeName        String           @db.VarChar(50)
+  gender              Gender           @default(MALE)
+  firmName            String           @unique @db.VarChar(50)
+  partnerName         String           @db.VarChar(50)
+  partnerStatus       OwnershipType    @default(OWNER)
+  partnerType         BusinessType     @default(OWNED)
+  sanctionedHP        Decimal          @db.Decimal(10, 2)
+  // officeNumber          String           @db.VarChar(15)
+  phoneNumber1        String           @db.VarChar(15)
+  phoneNumber2        String?          @db.VarChar(15)
+  surveyNumber        Int              @unique
+  village             String           @db.VarChar(50)
+  zone                String           @db.VarChar(50)
+  mandal              String           @db.VarChar(50)
+  district            String           @db.VarChar(50)
+  state               String           @db.VarChar(50)
+  pinCode             String           @db.VarChar(10)
 
-  machineryInformation     MachineryInformations?    @relation("MemberMachinery")
+  estimatedMaleWorker   Int       @default(0)
+  estimatedFemaleWorker Int       @default(0)
+  modifiedBy            Int?
+  approvedOrDeclinedBy  Int?      @db.Int
+  approvedOrDeclinedAt  DateTime?
+  declineReason         String?   @db.Text
+  createdAt             DateTime  @default(now())
+  modifiedAt            DateTime  @updatedAt
+
+  machineryInformations     MachineryInformations?    @relation("MemberMachinery")
   branches                 Branches[]                @relation("Branches")
   complianceDetails        ComplianceDetails?        @relation("ComplianceDetails")
   similarMembershipInquiry SimilarMembershipInquiry? @relation("SimilarMembershipInquiry")
-  attachments              Attachments?              @relation("Attachments")
-  proposedMember1          Proposer[]                @relation("ProposedMember1")
-  proposedMember2          ExecutiveProposer[]       @relation("ProposedMember2")
-  proposer                 Proposer[]                @relation("ValidProposer")
-  executiveProposer        ExecutiveProposer[]       @relation("ExecutiveProposer")
+  attachments              Attachments[]             @relation("Attachments")
+  proposedMember1          Proposer[]               @relation("ProposedMember1")
+  proposedMember2          ExecutiveProposer[]      @relation("ProposedMember2")
+  proposer                 Proposer ?               @relation("ValidProposer")
+  executiveProposer        ExecutiveProposer ?       @relation("ExecutiveProposer")
   declarations             Declarations?             @relation("Declarations")
   // membersTransactionHistory MembersTransactionHistory[] @relation("MembersTransactionHistory")
   labours                  Labours[]                 @relation("Labours")
   labourHistory            LabourHistory[]           @relation("LabourHistory")
   meetingAttendees         MeetingAttendees[]        @relation("MeetingAttendees")
   userModified             User?                     @relation("membersModified", fields: [modifiedBy], references: [id], onDelete: SetNull)
-  // membersPendingChanges    MembersPendingChanges[]   @relation("MembersPendingChanges")
+  membersPendingChanges    MembersPendingChanges[]   @relation("MembersPendingChanges")
   approvedOrDeclinedByUser User?                     @relation("ApprovedOrDeclinedRelation", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
 
   @@map("members")
@@ -108,90 +120,113 @@ model MachineryInformations {
 }
 
 model Branches {
-  id                  Int           @id @default(autoincrement())
-  membershipId        String        @db.VarChar(225)
-  electricalUscNumber String        @unique @db.VarChar(225)
-  surveyNumber        Int           @unique @db.Int
-  village             String        @db.VarChar(50)
-  zone                String        @db.VarChar(50)
-  ownershipType       OwnershipType @default(OWNER)
-  businessType        BusinessType  @default(OWN_BUSINESS)
-  sanctionedHP        Decimal       @db.Decimal(10, 2)
-  createdAt           DateTime      @default(now())
-  modifiedAt          DateTime      @updatedAt
+  id                  Int      @id @default(autoincrement())
+  membershipId        String   @db.VarChar(225)
+  electricalUscNumber String   @unique @db.VarChar(225)
+  scNumber            String   @unique @db.VarChar(225)
+  proprietorType      String   @db.VarChar(50)
+  proprietorStatus    String   @db.VarChar(50)
+  placeOfBusiness      String   @db.VarChar(50)
+  // surveyNumber        Int           @unique @db.Int
+  // village             String        @db.VarChar(50)
+  // zone                String        @db.VarChar(50)
+  // ownershipType       OwnershipType @default(OWNER)
+  // businessType        BusinessType  @default(OWN_BUSINESS)
+  sanctionedHP        Decimal  @db.Decimal(10, 2)
+  createdAt           DateTime @default(now())
+  modifiedAt          DateTime @updatedAt
 
   members              Members                @relation("Branches", fields: [membershipId], references: [membershipId], onDelete: Cascade)
-  machineryInformation MachineryInformations? @relation("BranchMachinery")
+  machineryInformations MachineryInformations? @relation("BranchMachinery")
 
   @@map("branches")
 }
 
 model ComplianceDetails {
-  id                     Int      @id @default(autoincrement())
-  membershipId           String   @unique
-  gstinNumber            String   @unique @db.VarChar(50)
-  factoryLicenseNumber   String   @unique @db.VarChar(50)
-  tspcbOrderNumber       String   @unique @db.VarChar(50)
-  mdlNumber              String   @unique @db.VarChar(50)
-  udyamCertificateNumber String   @unique @db.VarChar(50)
-  fullAddress            String   @unique @db.VarChar(225)
-  partnerName            String   @db.VarChar(50)
-  contactNumber          String   @db.VarChar(13)
-  AadharNumber           String   @db.VarChar(15)
-  createdAt              DateTime @default(now())
-  modifiedAt             DateTime @updatedAt
-  members                Members  @relation("ComplianceDetails", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  id           Int    @id @default(autoincrement())
+  membershipId String @unique
+
+  gstInNumber          String @unique @db.VarChar(50)
+  gstInCertificatePath String @db.VarChar(225)
+
+  factoryLicenseNumber String @unique @db.VarChar(50)
+  factoryLicensePath   String @db.VarChar(225)
+
+  tspcbOrderNumber     String @unique @db.VarChar(50)
+  tspcbCertificatePath String @db.VarChar(225)
+
+  mdlNumber          String @unique @db.VarChar(50)
+  mdlCertificatePath String @db.VarChar(225)
+
+  udyamCertificateNumber String @unique @db.VarChar(50)
+  udyamCertificatePath   String @db.VarChar(225)
+
+  fullAddress   String @unique @db.VarChar(225)
+  partnerName   String @db.VarChar(50)
+  contactNumber String @db.VarChar(13)
+  AadharNumber  String @db.VarChar(15)
+  emailId       String @db.VarChar(50)
+  panNumber     String @unique @db.VarChar(12)
+
+  createdAt  DateTime @default(now())
+  modifiedAt DateTime @updatedAt
+  members    Members  @relation("ComplianceDetails", fields: [membershipId], references: [membershipId], onDelete: Cascade)
 
   @@map("compliance_details")
 }
 
 model SimilarMembershipInquiry {
-  id                        Int      @id @default(autoincrement())
-  membershipId              String   @unique
-  isSimilarMember           Bool     @default(FALSE)
-  previousMembershipDetails String?  @db.VarChar(225)
-  createdAt                 DateTime @default(now())
-  modifiedAt                DateTime @updatedAt
-  members                   Members  @relation("SimilarMembershipInquiry", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  id                       Int      @id @default(autoincrement())
+  membershipId             String   @unique
+  is_member_of_similar_org Bool     @default(FALSE)
+  has_applied_earlier      Bool     @default(FALSE)
+  is_valid_member          Bool     @default(FALSE)
+  is_executive_member      Bool     @default(FALSE)
+  createdAt                DateTime @default(now())
+  modifiedAt               DateTime @updatedAt
+  members                  Members  @relation("SimilarMembershipInquiry", fields: [membershipId], references: [membershipId], onDelete: Cascade)
 
   @@map("similar_membership_inquiry")
 }
 
 model Attachments {
-  id             Int            @id @default(autoincrement())
-  membershipId   String         @unique
-  attachmentType AttachmentType @default(SALE_DEED)
-  filePath       String         @db.VarChar(225)
-  createdAt      DateTime       @default(now())
-  modifiedAt     DateTime       @updatedAt
-  members        Members        @relation("Attachments", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  id           Int      @id @default(autoincrement())
+
+  membershipId String   @db.VarChar(225)
+  // attachmentType AttachmentType @default(SALE_DEED)
+  documentName String   @db.VarChar(50)
+  documentPath String   @db.VarChar(225)
+  // filePath       String         @db.VarChar(225)
+  createdAt    DateTime @default(now())
+  modifiedAt   DateTime @updatedAt
+  members      Members  @relation("Attachments", fields: [membershipId], references: [membershipId], onDelete: Cascade)
 
   @@map("attachments")
 }
 
 model Proposer {
-  id            Int           @id @default(autoincrement())
-  membershipId  String        @db.VarChar(225)
-  proposerType  ProposerType?
-  proposerID    String?       @db.VarChar(225)
+  id            Int      @id @default(autoincrement())
+  membershipId  String   @db.VarChar(225) @unique
+  // proposerType  ProposerType?
+  proposerID    String?  @db.VarChar(225)
   // proposerName     String       @db.VarChar(50)
   // proposerFirmName String       @db.VarChar(100)
   // address          String       @db.VarChar(225)
-  signaturePath String?       @db.VarChar(255)
-  createdAt     DateTime      @default(now())
-  modifiedAt    DateTime      @updatedAt
+  signaturePath String?  @db.VarChar(255)
+  createdAt     DateTime @default(now())
+  modifiedAt    DateTime @updatedAt
 
-  proposedMember Members  @relation("ProposedMember1", fields: [membershipId], references: [membershipId], onDelete: Cascade)
-  proposer       Members? @relation("ValidProposer", fields: [proposerID], references: [membershipId], onDelete: Cascade)
+  proposer Members  @relation("ValidProposer", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  proposedMember1       Members? @relation("ProposedMember1", fields: [proposerID], references: [membershipId], onDelete: Cascade)
 
   @@map("proposers")
 }
 
 model ExecutiveProposer {
-  id           Int           @id @default(autoincrement())
-  membershipId String
-  proposerType ProposerType?
-  proposerID   String?       @db.VarChar(225)
+  id           Int     @id @default(autoincrement())
+  membershipId String @unique
+  // proposerType ProposerType?
+  proposerID   String? @db.VarChar(225)
 
   // proposerName     String       @db.VarChar(50)
   // proposerFirmName String       @db.VarChar(100)
@@ -200,8 +235,8 @@ model ExecutiveProposer {
   createdAt     DateTime @default(now())
   modifiedAt    DateTime @updatedAt
 
-  proposedMember Members  @relation("ProposedMember2", fields: [membershipId], references: [membershipId], onDelete: Cascade)
-  proposer       Members? @relation("ExecutiveProposer", fields: [proposerID], references: [membershipId], onDelete: Cascade)
+  proposer Members  @relation("ExecutiveProposer", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  proposedMember       Members? @relation("ProposedMember2", fields: [proposerID], references: [membershipId], onDelete: Cascade)
 
   @@map("executive_proposers")
 }
@@ -210,7 +245,8 @@ model Declarations {
   id                       Int      @id @default(autoincrement())
   membershipId             String   @unique
   agreesToTerms            Bool     @default(FALSE)
-  partnerPhotoPath         String   @db.VarChar(225)
+  // partnerPhotoPath         String   @db.VarChar(225)
+  membershipFormPath       String   @db.VarChar(225)
   applicationSignaturePath String   @db.VarChar(225)
   createdAt                DateTime @default(now())
   modifiedAt               DateTime @updatedAt
@@ -219,21 +255,21 @@ model Declarations {
   @@map("declarations")
 }
 
-// model MembersPendingChanges {
-//   id                   String         @id @default(uuid())
-//   membershipId         String
-//   approvalStatus       ApprovalStatus @default(PENDING)
-//   approvedOrDeclinedBy Int?           @db.Int
-//   updatedData          Json // Store changes as JSON
-//   modifiedBy           Int // User ID of the person making changes
-//   modifiedAt           DateTime       @default(now())
+model MembersPendingChanges {
+  id                   String         @id @default(uuid())
+  membershipId         String
+  approvalStatus       ApprovalStatus @default(PENDING)
+  approvedOrDeclinedBy Int?           @db.Int
+  updatedData          Json // Store changes as JSON
+  modifiedBy           Int // User ID of the person making changes
+  modifiedAt           DateTime       @default(now())
+  declineReason        String?        @db.Text
+  member           Members @relation("MembersPendingChanges", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  approvedByAdmin  User?   @relation("memberChangesApprovedBy", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
+  modifiedByEditor User    @relation("memberModifiedByEditor", fields: [modifiedBy], references: [id], onDelete: Cascade)
 
-//   member           Members @relation("MembersPendingChanges", fields: [membershipId], references: [membershipId], onDelete: Cascade)
-//   approvedByAdmin  User?   @relation("ApprovedByAdmin", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
-//   modifiedByEditor User    @relation("ModifiedByEditor", fields: [modifiedBy], references: [id], onDelete: Cascade)
-
-//   @@map("members_pending_changes")
-// }
+  @@map("members_pending_changes")
+}
 
 // model MembersTransactionHistory {
 //   id                Int               @id @default(autoincrement())
@@ -272,9 +308,10 @@ model Labours {
   modifiedByUser        User?                   @relation("Labours", fields: [modifiedBy], references: [id], onDelete: SetNull)
   laboursAdditionalDocs LaboursAdditionalDocs[] @relation("LaboursAdditionalDocs")
 
-  members          Members?           @relation("Labours", fields: [assignedTo], references: [membershipId], onDelete: Cascade)
-  meetingAttendees MeetingAttendees[] @relation("MeetingAttendees")
+  members          Members?                @relation("Labours", fields: [assignedTo], references: [membershipId], onDelete: Cascade)
+  meetingAttendees MeetingAttendees[]      @relation("MeetingAttendees")
   LabourHistory    LabourHistory[]
+  pendingChanges   LaboursPendingChanges[] @relation("LaboursPendingChanges")
 
   @@map("labours")
 }
@@ -289,6 +326,22 @@ model LaboursAdditionalDocs {
   labours Labours @relation("LaboursAdditionalDocs", fields: [labourId], references: [labourId], onDelete: Cascade)
 
   @@map("labours_additional_docs")
+}
+
+model LaboursPendingChanges {
+  id                   String         @id @default(uuid())
+  labourId             String
+  approvalStatus       ApprovalStatus @default(PENDING)
+  approvedOrDeclinedBy Int?           @db.Int
+  updatedData          Json // Store changes as JSON
+  modifiedBy           Int // User ID of the person making changes
+  modifiedAt           DateTime       @default(now())
+
+  labour           Labours @relation("LaboursPendingChanges", fields: [labourId], references: [labourId], onDelete: Cascade)
+  approvedByAdmin  User?   @relation("labourChangesApprovedBy", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
+  modifiedByEditor User    @relation("LabourModifiedByEditor", fields: [modifiedBy], references: [id], onDelete: Cascade)
+
+  @@map("labours_pending_changes")
 }
 
 model LabourHistory {
@@ -315,13 +368,14 @@ model Vehicles {
   vehicleNumber    String             @unique @db.VarChar(20)
   createdBy        Int?               @db.Int
   modifiedBy       Int?               @db.Int
-  vehicleType      String?             @db.VarChar(50)
+  vehicleType      String?            @db.VarChar(50)
   createdAt        DateTime           @default(now())
   modifiedAt       DateTime           @updatedAt
   tripRecords      TripRecords[]      @relation("TripRecord")
   meetingAttendees MeetingAttendees[] @relation("MeetingAttendees")
-  userCreated      User?             @relation("vehiclesCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  userModified     User?             @relation("vehiclesModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
+  userCreated      User?              @relation("vehiclesCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  userModified     User?              @relation("vehiclesModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
+
   @@map("vehicles")
 }
 
@@ -342,22 +396,22 @@ model TripRecords {
 }
 
 model Meetings {
-  id        String        @id @default(uuid())
-  title     String        @db.VarChar(255)
-  agenda    String?       @db.Text
-  notes     String?       @db.Text
-  startTime DateTime
-  endTime   DateTime
-  location  String?       @db.VarChar(255)
-  status    MeetingStatus @default(SCHEDULED)
-  createdBy Int           @db.Int
-  attendees Json          @db.Json // List of members, vehicles, and labours
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  modifiedBy Int?      @db.Int
-  modifiedByUser User?      @relation("MeetingModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
+  id             String        @id @default(uuid())
+  title          String        @db.VarChar(255)
+  agenda         String?       @db.Text
+  notes          String?       @db.Text
+  startTime      DateTime
+  endTime        DateTime
+  location       String?       @db.VarChar(255)
+  status         MeetingStatus @default(SCHEDULED)
+  createdBy      Int           @db.Int
+  attendees      Json          @db.Json // List of members, vehicles, and labours
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  modifiedBy     Int?          @db.Int
+  modifiedByUser User?         @relation("MeetingModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
 
-  User      User               @relation("Meetings", fields: [createdBy], references: [id], onDelete: Cascade)
+  User             User               @relation("Meetings", fields: [createdBy], references: [id], onDelete: Cascade)
   meetingAttendees MeetingAttendees[] @relation("MeetingAttendees")
   // meetingNotes MeetingNotes[]
 
@@ -427,8 +481,10 @@ enum OwnershipType {
 }
 
 enum BusinessType {
-  OWN_BUSINESS
-  FACTORY_ON_LEASE
+  OWNED
+  RENTED
+  TRADING
+  OTHER
 }
 
 enum Bool {
@@ -466,3 +522,5 @@ enum ApprovalStatus {
   APPROVED
   DECLINED
 }
+
+
