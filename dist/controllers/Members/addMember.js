@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addMember = exports.validateUSCNumber = void 0;
 const __1 = require("../..");
-const addMember_1 = require("../../schema/members/addMember");
+const AddMember_1 = require("../../schema/members/AddMember");
 const bad_request_1 = require("../../exceptions/bad-request");
 const root_1 = require("../../exceptions/root");
 // import { testS3Operations } from "../../services/s3Bucket/s3test";
@@ -58,7 +58,7 @@ const validateUSCNumber = (req, res, next) => __awaiter(void 0, void 0, void 0, 
 });
 exports.validateUSCNumber = validateUSCNumber;
 const addMember = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const memberDetails = addMember_1.MemberSignUpSchema.parse(req.body);
+    const memberDetails = AddMember_1.MemberSignUpSchema.parse(req.body);
     try {
         if (!["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
             return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
