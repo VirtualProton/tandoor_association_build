@@ -11,7 +11,9 @@ const client_1 = require("@prisma/client");
 const errors_1 = require("./middlewares/errors");
 const morgan_1 = __importDefault(require("morgan"));
 const logger_1 = __importDefault(require("./utils/logger"));
+const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
+app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, morgan_1.default)("combined", {
@@ -20,7 +22,7 @@ app.use((0, morgan_1.default)("combined", {
     }
 }));
 app.get('/', (req, res) => {
-    res.send('Working');
+    res.send('API is working. CORS is enabled for all origins.');
 });
 app.use('/api', route_1.default);
 exports.prismaClient = new client_1.PrismaClient({
