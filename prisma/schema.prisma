@@ -57,9 +57,9 @@ model Members {
   relativeName        String           @db.VarChar(50)
   gender              Gender           @default(MALE)
   firmName            String           @unique @db.VarChar(50)
-  partnerName         String           @db.VarChar(50)
-  partnerStatus       OwnershipType    @default(OWNER)
-  partnerType         BusinessType     @default(OWNED)
+  proprietorName      String           @db.VarChar(50)
+  proprietorStatus       OwnershipType    @default(OWNER)
+  proprietorType         BusinessType     @default(OWNED)
   sanctionedHP        Decimal          @db.Decimal(10, 2)
   // officeNumber          String           @db.VarChar(15)
   phoneNumber1        String           @db.VarChar(15)
@@ -81,7 +81,7 @@ model Members {
   createdAt             DateTime  @default(now())
   modifiedAt            DateTime  @updatedAt
 
-  machineryInformations     MachineryInformations?    @relation("MemberMachinery")
+  machineryInformations     MachineryInformations[]    @relation("MemberMachinery")
   branches                 Branches[]                @relation("Branches")
   complianceDetails        ComplianceDetails?        @relation("ComplianceDetails")
   similarMembershipInquiry SimilarMembershipInquiry? @relation("SimilarMembershipInquiry")
@@ -91,6 +91,7 @@ model Members {
   proposer                 Proposer ?               @relation("ValidProposer")
   executiveProposer        ExecutiveProposer ?       @relation("ExecutiveProposer")
   declarations             Declarations?             @relation("Declarations")
+  partnerDetails          PartnerDetails[]           @relation("PartnerDetails")
   // membersTransactionHistory MembersTransactionHistory[] @relation("MembersTransactionHistory")
   labours                  Labours[]                 @relation("Labours")
   labourHistory            LabourHistory[]           @relation("LabourHistory")
@@ -102,14 +103,27 @@ model Members {
   @@map("members")
 }
 
+model PartnerDetails{
+  id                Int      @id @default(autoincrement())
+  membershipId      String   @db.VarChar(225)
+  partnerName       String   @db.VarChar(50)
+  partnerAadharNo     String   @db.VarChar(15)
+  partnerPanNo     String   @db.VarChar(12)
+  contactNumber   String   @db.VarChar(13)
+  emailId         String   @db.VarChar(50)
+  createdAt         DateTime @default(now())
+  modifiedAt        DateTime @updatedAt
+
+  members Members? @relation("PartnerDetails", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+
+  @@map("partner_details")
+}
 model MachineryInformations {
   id                Int      @id @default(autoincrement())
-  membershipId      String?  @unique // Reference to Members
-  branchId          Int?     @unique // Reference to Branches
-  highPolishMachine Int      @default(0) @db.Int
-  sliceMachine      Int      @default(0) @db.Int
-  cuttingMachine    Int      @default(0) @db.Int
-  other             Int      @default(0) @db.Int
+  membershipId      String?  @db.VarChar(225)
+  branchId          Int?     @db.Int // Reference to Branches
+  machineName     String   @db.VarChar(50)
+  machineCount     Int      @default(0)
   createdAt         DateTime @default(now())
   modifiedAt        DateTime @updatedAt
 
@@ -137,7 +151,7 @@ model Branches {
   modifiedAt          DateTime @updatedAt
 
   members              Members                @relation("Branches", fields: [membershipId], references: [membershipId], onDelete: Cascade)
-  machineryInformations MachineryInformations? @relation("BranchMachinery")
+  machineryInformations MachineryInformations[] @relation("BranchMachinery")
 
   @@map("branches")
 }

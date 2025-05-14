@@ -16,10 +16,18 @@ const Proposer = zod_1.z.object({
 });
 // Machinery Info Schema
 const MachineryInformations = zod_1.z.object({
-    highPolishMachine: zod_1.z.number().int().default(0),
-    sliceMachine: zod_1.z.number().int().default(0),
-    cuttingMachine: zod_1.z.number().int().default(0),
-    other: zod_1.z.number().int().default(0),
+    id: zod_1.z.number().optional(),
+    machineName: zod_1.z.string().max(50),
+    machineCount: zod_1.z.number().int().default(0)
+});
+// Partner Details Schema
+const PartnerDetails = zod_1.z.object({
+    id: zod_1.z.number().optional(),
+    partnerName: zod_1.z.string().max(50),
+    partnerAadharNo: zod_1.z.string().max(15),
+    partnerPanNo: zod_1.z.string().max(12),
+    contactNumber: zod_1.z.string().max(10),
+    emailId: zod_1.z.string().max(50),
 });
 // Branch Schema
 const BranchSchema = zod_1.z.object({
@@ -32,7 +40,7 @@ const BranchSchema = zod_1.z.object({
         message: "Sanctioned HP must be a positive decimal",
     }),
     placeOfBusiness: zod_1.z.string().max(50),
-    machineryInformations: MachineryInformations
+    machineryInformations: zod_1.z.array(MachineryInformations).default([]),
 });
 // Compliance Details Schema
 const ComplianceDetails = zod_1.z.object({
@@ -94,9 +102,10 @@ exports.MemberUpdateSchema = zod_1.z.object({
     sanctionedHP: zod_1.z.number().refine((val) => val >= 0, {
         message: "Sanctioned HP must be a positive decimal",
     }),
+    partnerDetails: zod_1.z.array(PartnerDetails).default([]),
     estimatedMaleWorker: zod_1.z.number().int().default(0),
     estimatedFemaleWorker: zod_1.z.number().int().default(0),
-    machineryInformations: MachineryInformations,
+    machineryInformations: zod_1.z.array(MachineryInformations).default([]),
     branches: zod_1.z.array(BranchSchema).default([]),
     complianceDetails: ComplianceDetails,
     similarMembershipInquiry: SimilarMembershipInquiry,

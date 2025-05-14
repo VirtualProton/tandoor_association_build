@@ -15,10 +15,15 @@ const Proposer = zod_1.z.object({
     signaturePath: zod_1.z.string().nullable(),
 });
 const MachineryInformations = zod_1.z.object({
-    highPolishMachine: zod_1.z.number().int().default(0),
-    sliceMachine: zod_1.z.number().int().default(0),
-    cuttingMachine: zod_1.z.number().int().default(0),
-    other: zod_1.z.number().int().default(0),
+    machineName: zod_1.z.string().max(50),
+    machineCount: zod_1.z.number().int().default(0)
+});
+const PartnerDetails = zod_1.z.object({
+    partnerName: zod_1.z.string().max(50),
+    partnerAadharNo: zod_1.z.string().max(15),
+    partnerPanNo: zod_1.z.string().max(12),
+    contactNumber: zod_1.z.string().max(10),
+    emailId: zod_1.z.string().max(50),
 });
 const BranchSchema = zod_1.z.object({
     electricalUscNumber: zod_1.z.string(),
@@ -29,7 +34,7 @@ const BranchSchema = zod_1.z.object({
         message: "Sanctioned HP must be a positive decimal",
     }),
     placeOfBusiness: zod_1.z.string().max(50),
-    machineryInformations: MachineryInformations,
+    machineryInformations: zod_1.z.array(MachineryInformations).default([]),
 });
 // Compliance Details Schema
 const ComplianceDetails = zod_1.z.object({
@@ -75,7 +80,7 @@ exports.MemberSignUpSchema = zod_1.z.object({
     relativeName: zod_1.z.string().max(50),
     gender: Gender.default("MALE"),
     firmName: zod_1.z.string().max(50),
-    partnerName: zod_1.z.string().max(50),
+    proprietorName: zod_1.z.string().max(50),
     phoneNumber1: zod_1.z.string().max(15),
     phoneNumber2: zod_1.z.string().max(15).optional(),
     surveyNumber: zod_1.z.number(),
@@ -85,14 +90,15 @@ exports.MemberSignUpSchema = zod_1.z.object({
     district: zod_1.z.string().max(50),
     state: zod_1.z.string().max(50),
     pinCode: zod_1.z.string().max(10),
-    partnerStatus: OwnershipType.default("OWNER"),
-    partnerType: BusinessType.default("OWNED"),
+    proprietorStatus: OwnershipType.default("OWNER"),
+    proprietorType: BusinessType.default("OWNED"),
     sanctionedHP: zod_1.z.number().refine((val) => val >= 0, {
         message: "Sanctioned HP must be a positive decimal",
     }),
+    partnerDetails: zod_1.z.array(PartnerDetails).default([]),
     estimatedMaleWorker: zod_1.z.number().int().default(0),
     estimatedFemaleWorker: zod_1.z.number().int().default(0),
-    machineryInformations: MachineryInformations,
+    machineryInformations: zod_1.z.array(MachineryInformations).default([]),
     branches: zod_1.z.array(BranchSchema).default([]),
     complianceDetails: ComplianceDetails,
     similarMembershipInquiry: SimilarMembershipInquiry,

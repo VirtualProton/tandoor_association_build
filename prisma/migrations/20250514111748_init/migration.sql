@@ -30,9 +30,9 @@ CREATE TABLE `members` (
     `relativeName` VARCHAR(50) NOT NULL,
     `gender` ENUM('MALE', 'FEMALE', 'OTHER') NOT NULL DEFAULT 'MALE',
     `firmName` VARCHAR(50) NOT NULL,
-    `partnerName` VARCHAR(50) NOT NULL,
-    `partnerStatus` ENUM('OWNER', 'TENANT', 'TRADER') NOT NULL DEFAULT 'OWNER',
-    `partnerType` ENUM('OWNED', 'RENTED', 'TRADING', 'OTHER') NOT NULL DEFAULT 'OWNED',
+    `proprietorName` VARCHAR(50) NOT NULL,
+    `proprietorStatus` ENUM('OWNER', 'TENANT', 'TRADER') NOT NULL DEFAULT 'OWNER',
+    `proprietorType` ENUM('OWNED', 'RENTED', 'TRADING', 'OTHER') NOT NULL DEFAULT 'OWNED',
     `sanctionedHP` DECIMAL(10, 2) NOT NULL,
     `phoneNumber1` VARCHAR(15) NOT NULL,
     `phoneNumber2` VARCHAR(15) NULL,
@@ -58,19 +58,30 @@ CREATE TABLE `members` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `machinery_information` (
+CREATE TABLE `partner_details` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `membershipId` VARCHAR(191) NULL,
-    `branchId` INTEGER NULL,
-    `highPolishMachine` INTEGER NOT NULL DEFAULT 0,
-    `sliceMachine` INTEGER NOT NULL DEFAULT 0,
-    `cuttingMachine` INTEGER NOT NULL DEFAULT 0,
-    `other` INTEGER NOT NULL DEFAULT 0,
+    `membershipId` VARCHAR(225) NOT NULL,
+    `partnerName` VARCHAR(50) NOT NULL,
+    `partnerAadharNo` VARCHAR(15) NOT NULL,
+    `partnerPanNo` VARCHAR(12) NOT NULL,
+    `contactNumber` VARCHAR(13) NOT NULL,
+    `emailId` VARCHAR(50) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `modifiedAt` DATETIME(3) NOT NULL,
 
-    UNIQUE INDEX `machinery_information_membershipId_key`(`membershipId`),
-    UNIQUE INDEX `machinery_information_branchId_key`(`branchId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `machinery_information` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `membershipId` VARCHAR(225) NULL,
+    `branchId` INTEGER NULL,
+    `machineName` VARCHAR(50) NOT NULL,
+    `machineCount` INTEGER NOT NULL DEFAULT 0,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `modifiedAt` DATETIME(3) NOT NULL,
+
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -162,6 +173,7 @@ CREATE TABLE `proposers` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `modifiedAt` DATETIME(3) NOT NULL,
 
+    UNIQUE INDEX `proposers_membershipId_key`(`membershipId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -174,6 +186,7 @@ CREATE TABLE `executive_proposers` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `modifiedAt` DATETIME(3) NOT NULL,
 
+    UNIQUE INDEX `executive_proposers_membershipId_key`(`membershipId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -200,6 +213,7 @@ CREATE TABLE `members_pending_changes` (
     `updatedData` JSON NOT NULL,
     `modifiedBy` INTEGER NOT NULL,
     `modifiedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `declineReason` TEXT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -343,6 +357,9 @@ ALTER TABLE `members` ADD CONSTRAINT `members_modifiedBy_fkey` FOREIGN KEY (`mod
 
 -- AddForeignKey
 ALTER TABLE `members` ADD CONSTRAINT `members_approvedOrDeclinedBy_fkey` FOREIGN KEY (`approvedOrDeclinedBy`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `partner_details` ADD CONSTRAINT `partner_details_membershipId_fkey` FOREIGN KEY (`membershipId`) REFERENCES `members`(`membershipId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `machinery_information` ADD CONSTRAINT `machinery_information_membershipId_fkey` FOREIGN KEY (`membershipId`) REFERENCES `members`(`membershipId`) ON DELETE CASCADE ON UPDATE CASCADE;

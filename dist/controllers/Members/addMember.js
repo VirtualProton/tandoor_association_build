@@ -26,15 +26,15 @@ const validateUSCNumber = (req, res, next) => __awaiter(void 0, void 0, void 0, 
                     {
                         branches: {
                             some: {
-                                electricalUscNumber
-                            }
-                        }
-                    }
-                ]
+                                electricalUscNumber,
+                            },
+                        },
+                    },
+                ],
             },
             include: {
-                branches: true
-            }
+                branches: true,
+            },
         });
         if (member) {
             if (member.electricalUscNumber === electricalUscNumber) {
@@ -43,7 +43,11 @@ const validateUSCNumber = (req, res, next) => __awaiter(void 0, void 0, void 0, 
             else {
                 const matchingBranch = member.branches.find((branch) => branch.electricalUscNumber === electricalUscNumber);
                 if (matchingBranch) {
-                    res.json({ isMember: true, membershipId: member.membershipId, message: `Branch of member ${member.membershipId} ` });
+                    res.json({
+                        isMember: true,
+                        membershipId: member.membershipId,
+                        message: `Branch of member ${member.membershipId} `,
+                    });
                 }
                 else {
                     res.json({ isMember: false, message: "Not a member" });
@@ -66,6 +70,7 @@ const addMember = (req, res, next) => __awaiter(void 0, void 0, void 0, function
         const result = yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
             //Create a member
             const newMember = yield addMemberHandler(prisma, memberDetails, req.user);
+            const partnerDetails = yield addPartnerDetailsHandler(prisma, newMember.membershipId, memberDetails.partnerDetails);
             const machineryInformations = yield addMachineryInformationsHandler(prisma, newMember.membershipId, memberDetails.machineryInformations);
             //Add branches
             const branches = yield addBranchesHandler(prisma, newMember.membershipId, memberDetails.branches);
@@ -78,7 +83,18 @@ const addMember = (req, res, next) => __awaiter(void 0, void 0, void 0, function
             const proposer = yield addProposerHandler(prisma, newMember.membershipId, memberDetails.proposer);
             const executiveProposer = yield addExecutiveProposersHandler(prisma, newMember.membershipId, memberDetails.executiveProposer);
             const declarations = yield addDeclarationsHandler(prisma, newMember.membershipId, memberDetails.declarations);
-            return { newMember, machineryInformations, branches, complianceDetails, similarMembershipInquiry, attachments, proposer, executiveProposer, declarations };
+            return {
+                newMember,
+                partnerDetails,
+                machineryInformations,
+                branches,
+                complianceDetails,
+                similarMembershipInquiry,
+                attachments,
+                proposer,
+                executiveProposer,
+                declarations,
+            };
         }), { timeout: 20000 });
         res.status(200).json(result);
     }
@@ -96,9 +112,9 @@ const addMemberHandler = (prisma, memberDetails, user) => __awaiter(void 0, void
         relativeName: memberDetails.relativeName,
         gender: memberDetails.gender,
         firmName: memberDetails.firmName,
-        partnerName: memberDetails.partnerName,
-        partnerStatus: memberDetails.partnerStatus,
-        partnerType: memberDetails.partnerType,
+        proprietorName: memberDetails.proprietorName,
+        proprietorStatus: memberDetails.proprietorStatus,
+        proprietorType: memberDetails.proprietorType,
         phoneNumber1: memberDetails.phoneNumber1,
         phoneNumber2: memberDetails.phoneNumber2,
         surveyNumber: memberDetails.surveyNumber,
@@ -128,15 +144,20 @@ const addMemberHandler = (prisma, memberDetails, user) => __awaiter(void 0, void
     return yield prisma.members.create({ data });
 });
 const addMachineryInformationsHandler = (prisma, membershipId, machineryInformations) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield prisma.machineryInformations.create({
-        data: {
-            membershipId,
-            highPolishMachine: machineryInformations.highPolishMachine,
-            sliceMachine: machineryInformations.sliceMachine,
-            cuttingMachine: machineryInformations.cuttingMachine,
-            other: machineryInformations.other,
-        },
-    });
+    if (!(machineryInformations === null || machineryInformations === void 0 ? void 0 : machineryInformations.length))
+        return [];
+    const createdRecords = yield Promise.all(machineryInformations.map((machine) => {
+        var _a;
+        return prisma.machineryInformations.create({
+            data: {
+                membershipId,
+                machineName: machine.machineName,
+                machineCount: machine.machineCount,
+                branchId: (_a = machine.branchId) !== null && _a !== void 0 ? _a : null,
+            },
+        });
+    }));
+    return createdRecords;
 });
 const addBranchesHandler = (prisma, membershipId, branches) => __awaiter(void 0, void 0, void 0, function* () {
     return yield Promise.all(branches.map((branch) => __awaiter(void 0, void 0, void 0, function* () {
@@ -151,18 +172,16 @@ const addBranchesHandler = (prisma, membershipId, branches) => __awaiter(void 0,
                 placeOfBusiness: branch.placeOfBusiness,
             },
         });
-        const machineryInformations = yield prisma.machineryInformations.create({
-            data: {
-                // membershipId: membershipId,
-                branchId: newBranch.id,
-                highPolishMachine: branch.machineryInformations.highPolishMachine,
-                sliceMachine: branch.machineryInformations.sliceMachine,
-                cuttingMachine: branch.machineryInformations.cuttingMachine,
-                other: branch.machineryInformations.other,
-            },
+        const machineryData = branch.machineryInformations.map((machine) => ({
+            // membershipId,
+            branchId: newBranch.id,
+            machineName: machine.machineName,
+            machineCount: machine.machineCount,
+        }));
+        const createdMachineries = yield prisma.machineryInformations.createMany({
+            data: machineryData,
         });
-        newBranch['machineryInformations'] = machineryInformations;
-        return newBranch;
+        return Object.assign(Object.assign({}, newBranch), { machineryInformations: machineryData });
     })));
 });
 const addComplianceDetailsHandler = (prisma, membershipId, complianceDetails) => __awaiter(void 0, void 0, void 0, function* () {
@@ -201,7 +220,7 @@ const addExecutiveProposersHandler = (prisma, membershipId, executiveProposer) =
             membershipId,
             proposerID: executiveProposer.proposerID,
             signaturePath: executiveProposer.signaturePath,
-        }
+        },
     });
 });
 const addDeclarationsHandler = (prisma, membershipId, declarations) => __awaiter(void 0, void 0, void 0, function* () {
@@ -213,4 +232,18 @@ const addDeclarationsHandler = (prisma, membershipId, declarations) => __awaiter
             applicationSignaturePath: declarations.applicationSignaturePath,
         },
     });
+});
+const addPartnerDetailsHandler = (prisma, membershipId, partnerDetails) => __awaiter(void 0, void 0, void 0, function* () {
+    return yield Promise.all(partnerDetails.map((partner) => __awaiter(void 0, void 0, void 0, function* () {
+        return yield prisma.partnerDetails.create({
+            data: {
+                membershipId,
+                partnerName: partner.partnerName,
+                partnerAadharNo: partner.partnerAadharNo,
+                partnerPanNo: partner.partnerPanNo,
+                contactNumber: partner.contactNumber,
+                emailId: partner.emailId,
+            },
+        });
+    })));
 });

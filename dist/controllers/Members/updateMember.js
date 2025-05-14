@@ -18,6 +18,7 @@ const __1 = require("../..");
 const root_1 = require("../../exceptions/root");
 const bad_request_1 = require("../../exceptions/bad-request");
 const lodash_1 = __importDefault(require("lodash"));
+const EDITOR_ROLES = new Set(["TSMWA_EDITOR", "TQMA_EDITOR"]);
 const updateMember = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const partialUpdateData = UpdateMember_1.MemberPartialUpdateSchema.parse(req.body);
@@ -27,6 +28,7 @@ const updateMember = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
             include: {
                 machineryInformations: true,
                 branches: { include: { machineryInformations: true } },
+                partnerDetails: true,
                 complianceDetails: true,
                 similarMembershipInquiry: true,
                 attachments: true,
@@ -42,9 +44,7 @@ const updateMember = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
         if (Object.keys(changes).length === 0) {
             throw new bad_request_1.BadRequestsException("No changes detected", root_1.ErrorCode.NO_DATA_PROVIDED);
         }
-        if (["TSMWA_EDITOR", "TQMA_EDITOR"].includes(req.user.role)) {
-            // Save pending changes only
-            console.log("userID", req.user.userId);
+        if (EDITOR_ROLES.has(req.user.role)) {
             const pendingChange = yield __1.prismaClient.membersPendingChanges.create({
                 data: {
                     membershipId: partialUpdateData.membershipId,
@@ -52,61 +52,44 @@ const updateMember = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
                     modifiedBy: req.user.userId,
                 },
             });
-            return res.json({
-                message: "Changes submitted for approval",
-                pendingChange,
-            });
+            return res.json({ message: "Changes submitted for approval", pendingChange });
         }
         if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) === "ADMIN") {
             const result = yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
-                var _a;
-                // Save approved record in pending changes
                 yield prisma.membersPendingChanges.create({
                     data: {
                         membershipId: partialUpdateData.membershipId,
                         updatedData: changes,
                         modifiedBy: req.user.userId,
                         approvalStatus: "APPROVED",
-                        approvedOrDeclinedBy: (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId,
+                        approvedOrDeclinedBy: req.user.userId,
                     },
                 });
-                // Apply update to Member schema
                 yield applyChanges(prisma, partialUpdateData.membershipId, changes, existingMember, req.user.userId);
                 return { message: "Changes approved and applied" };
-            }), { timeout: 20000 });
+            }), { timeout: 30000 });
             return res.json(result);
         }
         throw new bad_request_1.BadRequestsException("Invalid user role", root_1.ErrorCode.UNAUTHORIZED);
     }
     catch (e) {
-        console.log(e);
+        console.error(e);
         next(e);
     }
 });
 exports.updateMember = updateMember;
 function cleanObject(obj) {
-    if (lodash_1.default.isArray(obj)) {
+    if (lodash_1.default.isArray(obj))
         return obj.map(cleanObject);
-    }
-    else if (lodash_1.default.isPlainObject(obj)) {
-        const clone = Object.assign({}, obj);
-        delete clone.id;
-        delete clone.createdAt;
-        delete clone.modifiedAt;
-        delete clone.membershipId;
-        delete clone.branchId;
-        return lodash_1.default.mapValues(clone, cleanObject);
+    if (lodash_1.default.isPlainObject(obj)) {
+        const cleaned = lodash_1.default.omit(obj, ["id", "createdAt", "modifiedAt", "membershipId", "branchId"]);
+        return lodash_1.default.mapValues(cleaned, cleanObject);
     }
     return obj;
 }
 function calculateFieldDifferences(existing, incoming) {
     const result = {};
     for (const key in incoming) {
-        if (key === 'attachments' || key === 'branches') {
-            // Always include these
-            result[key] = incoming[key];
-            continue;
-        }
         const cleanedExisting = cleanObject(existing[key]);
         const cleanedIncoming = cleanObject(incoming[key]);
         if (!lodash_1.default.isEqual(cleanedExisting, cleanedIncoming)) {
@@ -115,141 +98,90 @@ function calculateFieldDifferences(existing, incoming) {
     }
     return result;
 }
+function upsertCollection(prisma, model, existingItems, incomingItems, connectData) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const incomingIds = incomingItems.map((i) => i.id).filter(Boolean);
+        const toDelete = existingItems.filter((e) => !incomingIds.includes(e.id));
+        yield Promise.all(toDelete.map((item) => prisma[model].delete({ where: { id: item.id } })));
+        for (const item of incomingItems) {
+            if (item.id) {
+                yield prisma[model].update({ where: { id: item.id }, data: item });
+            }
+            else {
+                yield prisma[model].create({ data: Object.assign(Object.assign({}, item), connectData) });
+            }
+        }
+    });
+}
 function applyChanges(prisma, membershipId, changes, existingMember, adminId) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log("Changes to apply:", existingMember);
-        console.log("Changes to apply:", changes);
-        if (Object.keys(changes).length === 0)
-            return;
+        var _a;
         if (changes.machineryInformations) {
-            yield prisma.machineryInformations.updateMany({
-                where: { membershipId },
-                data: changes.machineryInformations,
-            });
+            yield upsertCollection(prisma, "machineryInformations", existingMember.machineryInformations, changes.machineryInformations, { membershipId });
         }
-        //branches
-        // Check if branches exist in the incoming data
         if (changes.branches) {
-            const existingBranches = existingMember.branches || [];
-            const incomingBranches = changes.branches
-                .map((b) => b.id)
-                .filter(Boolean);
-            const toDelete = existingBranches.filter((b) => !incomingBranches.includes(b.id));
-            yield Promise.all(toDelete.map((branch) => {
-                return prisma.branches.delete({
-                    where: { id: branch.id },
-                });
-            }));
-            for (const branch of changes.branches) {
+            const existingBranches = lodash_1.default.keyBy(existingMember.branches, "id");
+            const incomingBranches = changes.branches;
+            const incomingIds = incomingBranches.map((b) => b.id).filter(Boolean);
+            const toDelete = Object.keys(existingBranches).filter(id => !incomingIds.includes(Number(id)));
+            yield Promise.all(toDelete.map(id => prisma.branches.delete({ where: { id: Number(id) } })));
+            for (const branch of incomingBranches) {
                 if (branch.id) {
                     yield prisma.branches.update({
                         where: { id: branch.id },
-                        data: {
-                            electricalUscNumber: branch.electricalUscNumber,
-                            scNumber: branch.scNumber,
-                            proprietorType: branch.proprietorType,
-                            proprietorStatus: branch.proprietorStatus,
-                            sanctionedHP: branch.sanctionedHP,
-                            placeOfBusiness: branch.placeOfBusiness,
-                        },
+                        data: lodash_1.default.omit(branch, ["machineryInformations"]),
                     });
-                    if (branch.machineryInformation) {
-                        yield prisma.machineryInformations.update({
-                            where: { branchId: branch.machineryInformation.branchId },
-                            data: Object.assign({}, branch.machineryInformation),
-                        });
+                    if (branch.machineryInformations) {
+                        yield upsertCollection(prisma, "machineryInformations", ((_a = existingBranches[branch.id]) === null || _a === void 0 ? void 0 : _a.machineryInformations) || [], branch.machineryInformations, { branchId: branch.id });
                     }
                 }
                 else {
-                    const createdBranch = yield prisma.branches.create({
-                        data: {
-                            electricalUscNumber: branch.electricalUscNumber,
-                            scNumber: branch.scNumber,
-                            proprietorType: branch.proprietorType,
-                            proprietorStatus: branch.proprietorStatus,
-                            sanctionedHP: branch.sanctionedHP,
-                            placeOfBusiness: branch.placeOfBusiness,
-                            membershipId,
-                        },
+                    const created = yield prisma.branches.create({
+                        data: Object.assign(Object.assign({}, lodash_1.default.omit(branch, ["machineryInformations"])), { membershipId }),
                     });
-                    if (branch.machineryInformation) {
-                        yield prisma.machineryInformations.create({
-                            data: Object.assign(Object.assign({}, branch.machineryInformations), { branchId: createdBranch.id }),
-                        });
+                    if (branch.machineryInformations) {
+                        yield upsertCollection(prisma, "machineryInformations", [], branch.machineryInformations, { branchId: created.id });
                     }
                 }
             }
-            if (changes.complianceDetails) {
-                yield prisma.complianceDetails.update({
-                    where: { membershipId },
-                    data: changes.complianceDetails,
-                });
-            }
-            if (changes.similarMembershipInquiry) {
-                yield prisma.similarMembershipInquiry.update({
-                    where: { membershipId },
-                    data: changes.similarMembershipInquiry,
-                });
-            }
-            if (changes.attachments) {
-                const existingAttachments = existingMember.attachments || [];
-                const incomingAttachments = changes.attachments
-                    .map((b) => b.id)
-                    .filter(Boolean);
-                const toDelete = existingAttachments.filter((a) => !incomingAttachments.includes(a.id));
-                yield Promise.all(toDelete.map((attachment) => {
-                    return prisma.attachments.delete({
-                        where: { id: attachment.id },
-                    });
-                }));
-                for (const attachment of changes.attachments) {
-                    if (attachment.id) {
-                        yield prisma.attachments.update({
-                            where: { id: attachment.id },
-                            data: Object.assign({}, attachment),
-                        });
-                    }
-                    else {
-                        yield prisma.attachments.create({
-                            data: Object.assign(Object.assign({}, attachment), { membershipId }),
-                        });
-                    }
-                }
-            }
-            if (changes.proposer) {
-                yield prisma.proposer.update({
-                    where: { membershipId },
-                    data: changes.proposer,
-                });
-            }
-            if (changes.executiveProposer) {
-                yield prisma.executiveProposer.update({
-                    where: { membershipId },
-                    data: changes.executiveProposer,
-                });
-            }
-            if (changes.declarations) {
-                yield prisma.declarations.update({
-                    where: { membershipId },
-                    data: changes.declarations,
-                });
-            }
-            const memberFields = lodash_1.default.omit(changes, [
-                "machineryInformations",
-                "branches",
-                "complianceDetails",
-                "similarMembershipInquiry",
-                "attachments",
-                "proposer",
-                "executiveProposer",
-                "declarations",
-            ]);
-            if (Object.keys(memberFields).length > 0) {
-                yield prisma.members.update({
-                    where: { membershipId },
-                    data: Object.assign(Object.assign({}, memberFields), { approvalStatus: "APPROVED", membershipStatus: "ACTIVE", approvedOrDeclinedBy: adminId, approvedOrDeclinedAt: new Date(), nextDueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)) }),
-                });
-            }
+        }
+        if (changes.partnerDetails) {
+            yield upsertCollection(prisma, "partnerDetails", existingMember.partnerDetails, changes.partnerDetails, { membershipId });
+        }
+        if (changes.complianceDetails) {
+            yield prisma.complianceDetails.update({ where: { membershipId }, data: changes.complianceDetails });
+        }
+        if (changes.similarMembershipInquiry) {
+            yield prisma.similarMembershipInquiry.update({ where: { membershipId }, data: changes.similarMembershipInquiry });
+        }
+        if (changes.attachments) {
+            yield upsertCollection(prisma, "attachments", existingMember.attachments, changes.attachments, { membershipId });
+        }
+        if (changes.proposer) {
+            yield prisma.proposer.update({ where: { membershipId }, data: changes.proposer });
+        }
+        if (changes.executiveProposer) {
+            yield prisma.executiveProposer.update({ where: { membershipId }, data: changes.executiveProposer });
+        }
+        if (changes.declarations) {
+            yield prisma.declarations.update({ where: { membershipId }, data: changes.declarations });
+        }
+        const memberFields = lodash_1.default.omit(changes, [
+            "machineryInformations",
+            "branches",
+            "complianceDetails",
+            "similarMembershipInquiry",
+            "attachments",
+            "proposer",
+            "partnerDetails",
+            "executiveProposer",
+            "declarations",
+        ]);
+        if (Object.keys(memberFields).length > 0) {
+            yield prisma.members.update({
+                where: { membershipId },
+                data: Object.assign(Object.assign({}, memberFields), { approvalStatus: "APPROVED", membershipStatus: "ACTIVE", approvedOrDeclinedBy: adminId, approvedOrDeclinedAt: new Date(), nextDueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)) }),
+            });
         }
     });
 }
