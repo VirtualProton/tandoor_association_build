@@ -47,8 +47,9 @@ model Members {
   membershipId        String           @id @default(uuid())
   approvalStatus      ApprovalStatus   @default(PENDING)
   membershipStatus    MembershipStatus @default(INACTIVE)
-  nextDueDate         DateTime         @default(now())
-  isPaymentDue         Bool             @default(TRUE)
+  nextDueDate         DateTime?
+  subscriptionAmount  Decimal          @db.Decimal(10, 2)
+  isPaymentDue        Bool             @default(TRUE)
   // isExecutive         Bool             @default(FALSE)
   electricalUscNumber String           @db.VarChar(225)
   scNumber            String           @db.VarChar(225)
@@ -58,8 +59,8 @@ model Members {
   gender              Gender           @default(MALE)
   firmName            String           @unique @db.VarChar(50)
   proprietorName      String           @db.VarChar(50)
-  proprietorStatus       OwnershipType    @default(OWNER)
-  proprietorType         BusinessType     @default(OWNED)
+  proprietorStatus    OwnershipType    @default(OWNER)
+  proprietorType      BusinessType     @default(OWNED)
   sanctionedHP        Decimal          @db.Decimal(10, 2)
   // officeNumber          String           @db.VarChar(15)
   phoneNumber1        String           @db.VarChar(15)
@@ -81,55 +82,58 @@ model Members {
   createdAt             DateTime  @default(now())
   modifiedAt            DateTime  @updatedAt
 
-  machineryInformations     MachineryInformations[]    @relation("MemberMachinery")
-  branches                 Branches[]                @relation("Branches")
-  complianceDetails        ComplianceDetails?        @relation("ComplianceDetails")
-  similarMembershipInquiry SimilarMembershipInquiry? @relation("SimilarMembershipInquiry")
-  attachments              Attachments[]             @relation("Attachments")
-  proposedMember1          Proposer[]               @relation("ProposedMember1")
-  proposedMember2          ExecutiveProposer[]      @relation("ProposedMember2")
-  proposer                 Proposer ?               @relation("ValidProposer")
-  executiveProposer        ExecutiveProposer ?       @relation("ExecutiveProposer")
-  declarations             Declarations?             @relation("Declarations")
-  partnerDetails          PartnerDetails[]           @relation("PartnerDetails")
-  // membersTransactionHistory MembersTransactionHistory[] @relation("MembersTransactionHistory")
-  labours                  Labours[]                 @relation("Labours")
-  labourHistory            LabourHistory[]           @relation("LabourHistory")
-  meetingAttendees         MeetingAttendees[]        @relation("MeetingAttendees")
-  userModified             User?                     @relation("membersModified", fields: [modifiedBy], references: [id], onDelete: SetNull)
-  membersPendingChanges    MembersPendingChanges[]   @relation("MembersPendingChanges")
-  approvedOrDeclinedByUser User?                     @relation("ApprovedOrDeclinedRelation", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
+  machineryInformations     MachineryInformations[]     @relation("MemberMachinery")
+  branches                  Branches[]                  @relation("Branches")
+  complianceDetails         ComplianceDetails?          @relation("ComplianceDetails")
+  similarMembershipInquiry  SimilarMembershipInquiry?   @relation("SimilarMembershipInquiry")
+  attachments               Attachments[]               @relation("Attachments")
+  proposedMember1           Proposer[]                  @relation("ProposedMember1")
+  proposedMember2           ExecutiveProposer[]         @relation("ProposedMember2")
+  proposer                  Proposer?                   @relation("ValidProposer")
+  executiveProposer         ExecutiveProposer?          @relation("ExecutiveProposer")
+  declarations              Declarations?               @relation("Declarations")
+  partnerDetails            PartnerDetails[]            @relation("PartnerDetails")
+  membersTransactionHistory MembersTransactionHistory[] @relation("MembersTransactionHistory")
+  labours                   Labours[]                   @relation("Labours")
+  labourHistory             LabourHistory[]             @relation("LabourHistory")
+  meetingAttendees          MeetingAttendees[]          @relation("MeetingAttendees")
+  userModified              User?                       @relation("membersModified", fields: [modifiedBy], references: [id], onDelete: SetNull)
+  membersPendingChanges     MembersPendingChanges[]     @relation("MembersPendingChanges")
+  approvedOrDeclinedByUser  User?                       @relation("ApprovedOrDeclinedRelation", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
 
   @@map("members")
 }
 
-model PartnerDetails{
-  id                Int      @id @default(autoincrement())
-  membershipId      String   @db.VarChar(225)
-  partnerName       String   @db.VarChar(50)
-  partnerAadharNo     String   @db.VarChar(15)
-  partnerPanNo     String   @db.VarChar(12)
+model PartnerDetails {
+  id              Int      @id @default(autoincrement())
+  membershipId    String   @db.VarChar(225)
+  partnerName     String   @db.VarChar(50)
+  partnerAadharNo String   @db.VarChar(15)
+  partnerPanNo    String   @db.VarChar(12)
   contactNumber   String   @db.VarChar(13)
   emailId         String   @db.VarChar(50)
-  createdAt         DateTime @default(now())
-  modifiedAt        DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  modifiedAt      DateTime @updatedAt
 
   members Members? @relation("PartnerDetails", fields: [membershipId], references: [membershipId], onDelete: Cascade)
 
   @@map("partner_details")
 }
+
 model MachineryInformations {
-  id                Int      @id @default(autoincrement())
-  membershipId      String?  @db.VarChar(225)
-  branchId          Int?     @db.Int // Reference to Branches
-  machineName     String   @db.VarChar(50)
-  machineCount     Int      @default(0)
-  createdAt         DateTime @default(now())
-  modifiedAt        DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  membershipId String?  @db.VarChar(225)
+  branchId     Int?     @db.Int // Reference to Branches
+  machineName  String   @db.VarChar(50)
+  machineCount Int      @default(0)
+  createdAt    DateTime @default(now())
+  modifiedAt   DateTime @updatedAt
 
   members  Members?  @relation("MemberMachinery", fields: [membershipId], references: [membershipId], onDelete: Cascade)
   branches Branches? @relation("BranchMachinery", fields: [branchId], references: [id], onDelete: Cascade)
 
+  @@index([id, membershipId])
+  // @@unique([membershipId,branchId, machineName])  
   @@map("machinery_information")
 }
 
@@ -140,7 +144,7 @@ model Branches {
   scNumber            String   @unique @db.VarChar(225)
   proprietorType      String   @db.VarChar(50)
   proprietorStatus    String   @db.VarChar(50)
-  placeOfBusiness      String   @db.VarChar(50)
+  placeOfBusiness     String   @db.VarChar(50)
   // surveyNumber        Int           @unique @db.Int
   // village             String        @db.VarChar(50)
   // zone                String        @db.VarChar(50)
@@ -150,9 +154,10 @@ model Branches {
   createdAt           DateTime @default(now())
   modifiedAt          DateTime @updatedAt
 
-  members              Members                @relation("Branches", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  members               Members                 @relation("Branches", fields: [membershipId], references: [membershipId], onDelete: Cascade)
   machineryInformations MachineryInformations[] @relation("BranchMachinery")
 
+  @@index([id, membershipId])
   @@map("branches")
 }
 
@@ -204,7 +209,7 @@ model SimilarMembershipInquiry {
 }
 
 model Attachments {
-  id           Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   membershipId String   @db.VarChar(225)
   // attachmentType AttachmentType @default(SALE_DEED)
@@ -215,12 +220,15 @@ model Attachments {
   modifiedAt   DateTime @updatedAt
   members      Members  @relation("Attachments", fields: [membershipId], references: [membershipId], onDelete: Cascade)
 
+  @@unique([membershipId, documentName]) // Ensures a unique entry per membership and document name
+  @@index([id])
+  @@index([membershipId])
   @@map("attachments")
 }
 
 model Proposer {
   id            Int      @id @default(autoincrement())
-  membershipId  String   @db.VarChar(225) @unique
+  membershipId  String   @unique @db.VarChar(225)
   // proposerType  ProposerType?
   proposerID    String?  @db.VarChar(225)
   // proposerName     String       @db.VarChar(50)
@@ -230,15 +238,15 @@ model Proposer {
   createdAt     DateTime @default(now())
   modifiedAt    DateTime @updatedAt
 
-  proposer Members  @relation("ValidProposer", fields: [membershipId], references: [membershipId], onDelete: Cascade)
-  proposedMember1       Members? @relation("ProposedMember1", fields: [proposerID], references: [membershipId], onDelete: Cascade)
+  proposer        Members  @relation("ValidProposer", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  proposedMember1 Members? @relation("ProposedMember1", fields: [proposerID], references: [membershipId], onDelete: Cascade)
 
   @@map("proposers")
 }
 
 model ExecutiveProposer {
   id           Int     @id @default(autoincrement())
-  membershipId String @unique
+  membershipId String  @unique
   // proposerType ProposerType?
   proposerID   String? @db.VarChar(225)
 
@@ -249,8 +257,8 @@ model ExecutiveProposer {
   createdAt     DateTime @default(now())
   modifiedAt    DateTime @updatedAt
 
-  proposer Members  @relation("ExecutiveProposer", fields: [membershipId], references: [membershipId], onDelete: Cascade)
-  proposedMember       Members? @relation("ProposedMember2", fields: [proposerID], references: [membershipId], onDelete: Cascade)
+  proposer       Members  @relation("ExecutiveProposer", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  proposedMember Members? @relation("ProposedMember2", fields: [proposerID], references: [membershipId], onDelete: Cascade)
 
   @@map("executive_proposers")
 }
@@ -278,44 +286,61 @@ model MembersPendingChanges {
   modifiedBy           Int // User ID of the person making changes
   modifiedAt           DateTime       @default(now())
   declineReason        String?        @db.Text
-  member           Members @relation("MembersPendingChanges", fields: [membershipId], references: [membershipId], onDelete: Cascade)
-  approvedByAdmin  User?   @relation("memberChangesApprovedBy", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
-  modifiedByEditor User    @relation("memberModifiedByEditor", fields: [modifiedBy], references: [id], onDelete: Cascade)
+  member               Members        @relation("MembersPendingChanges", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  approvedByAdmin      User?          @relation("memberChangesApprovedBy", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
+  modifiedByEditor     User           @relation("memberModifiedByEditor", fields: [modifiedBy], references: [id], onDelete: Cascade)
 
+  @@index([id])
   @@map("members_pending_changes")
 }
 
-// model MembersTransactionHistory {
-//   id                Int               @id @default(autoincrement())
-//   membershipId      String
-//   amount            Decimal           @db.Decimal(10, 2) // Supports money values
-//   transactionType   TransactionType // ENUM: CREDIT/DEBIT
-//   transactionStatus TransactionStatus // ENUM: SUCCESS/PENDING/FAILED
-//   referenceId       String            @unique @db.VarChar(100) // Optional unique reference ID
-//   createdAt         DateTime          @default(now())
-//   members           Members           @relation("MembersTransactionHistory", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+model MembersTransactionHistory {
+  id           Int       @id @default(autoincrement())
+  membershipId String    @db.VarChar(225)
+  month        Int
+  year         Int
+  amount       Decimal   @db.Decimal(10, 2) // Supports money
+  isPaid       Bool      @default(FALSE) // true means paid
+  paidAt       DateTime? // Date when the payment was made
+  // paymentMode      String            @db.VarChar(50) // e.g., Cash, Cheque, Online
+  // transactionId    String?           @db.VarChar(100) // Optional transaction ID
+  // receiptPath      String?           @db.VarChar(225) // Optional path to the receipt
+  // referenceId       String            @unique @db.VarChar(100) // Optional unique reference ID
+  createdAt    DateTime  @default(now())
+  members      Members   @relation("MembersTransactionHistory", fields: [membershipId], references: [membershipId], onDelete: Cascade)
 
-//   @@map("transaction_history")
-// }
+  @@unique([membershipId, month, year]) // Ensures a unique entry per month and year
+  @@index([membershipId]) // Index for faster lookups
+  @@map("transaction_history")
+}
 
 model Labours {
-  labourId              String                  @id @default(uuid())
-  fullName              String                  @db.VarChar(100)
-  fatherName            String                  @db.VarChar(100)
-  permanentAddress      String                  @db.VarChar(225)
-  presentAddress        String                  @db.VarChar(225)
-  aadharNumber          String                  @unique @db.VarChar(12)
-  panNumber             String                  @unique @db.VarChar(12)
-  esiNumber             String?                 @db.VarChar(50)
-  employedIn            String                  @db.VarChar(100)
-  employedFrom          DateTime                @default(now())
-  assignedTo            String?                 @db.VarChar(225)
-  onBench               Bool                    @default(TRUE) // true means currently unassigned
-  signaturePath         String                  @db.VarChar(225)
-  fingerPrint           String                  @db.VarChar(225)
-  aadharPhotoPath       String                  @db.VarChar(225)
-  livePhotoPath         String                  @db.VarChar(225)
-  isActive              Bool                    @default(TRUE)
+  labourId         String  @id @default(uuid())
+  fullName         String  @db.VarChar(100)
+  fatherName       String  @db.VarChar(100)
+  dob              String  @db.VarChar(50)
+  phoneNumber      String  @unique @db.VarChar(13)
+  emailId          String? @unique @db.VarChar(50)
+  aadharNumber     String  @unique @db.VarChar(12)
+  permanentAddress String  @db.VarChar(225)
+  presentAddress   String  @db.VarChar(225)
+  photoPath        String  @db.VarChar(225)
+  aadharPath       String  @db.VarChar(225)
+
+  panNumber    String       @unique @db.VarChar(12)
+  esiNumber    String?      @db.VarChar(50)
+  // onBench     
+  labourStatus labourStatus @default(ACTIVE)
+
+  assignedTo String? @db.VarChar(225)
+
+  // employedIn            String                  @db.VarChar(100)
+  // employedFrom          DateTime                @default(now())  
+  // signaturePath         String                  @db.VarChar(225)
+  // fingerPrint           String                  @db.VarChar(225)
+  // aadharPhotoPath       String                  @db.VarChar(225)
+  // livePhotoPath         String                  @db.VarChar(225)
+  // isActive              Bool                    @default(TRUE)
   createdAt             DateTime                @default(now())
   modifiedAt            DateTime                @updatedAt
   modifiedBy            Int?                    @db.Int
@@ -339,6 +364,8 @@ model LaboursAdditionalDocs {
 
   labours Labours @relation("LaboursAdditionalDocs", fields: [labourId], references: [labourId], onDelete: Cascade)
 
+  @@unique([labourId, docName]) // Ensures a unique entry per labour and document name
+  @@index([labourId]) // Index for faster lookups
   @@map("labours_additional_docs")
 }
 
@@ -366,6 +393,7 @@ model LabourHistory {
   reasonForTransfer String?   @db.VarChar(225)
   fromDate          DateTime  @default(now())
   toDate            DateTime?
+  createdAt         DateTime  @default(now())
 
   labours Labours  @relation(fields: [labourId], references: [labourId], onDelete: Cascade)
   members Members? @relation("LabourHistory", fields: [assignedTo], references: [membershipId], onDelete: Cascade)
@@ -537,4 +565,8 @@ enum ApprovalStatus {
   DECLINED
 }
 
-
+enum labourStatus {
+  ACTIVE
+  INACTIVE
+  ON_BENCH
+}

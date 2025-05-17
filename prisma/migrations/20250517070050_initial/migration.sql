@@ -21,7 +21,8 @@ CREATE TABLE `members` (
     `membershipId` VARCHAR(191) NOT NULL,
     `approvalStatus` ENUM('PENDING', 'APPROVED', 'DECLINED') NOT NULL DEFAULT 'PENDING',
     `membershipStatus` ENUM('ACTIVE', 'INACTIVE', 'CANCELLED') NOT NULL DEFAULT 'INACTIVE',
-    `nextDueDate` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `nextDueDate` DATETIME(3) NULL,
+    `subscriptionAmount` DECIMAL(10, 2) NOT NULL,
     `isPaymentDue` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'TRUE',
     `electricalUscNumber` VARCHAR(225) NOT NULL,
     `scNumber` VARCHAR(225) NOT NULL,
@@ -82,6 +83,7 @@ CREATE TABLE `machinery_information` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `modifiedAt` DATETIME(3) NOT NULL,
 
+    INDEX `machinery_information_id_membershipId_idx`(`id`, `membershipId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -100,6 +102,7 @@ CREATE TABLE `branches` (
 
     UNIQUE INDEX `branches_electricalUscNumber_key`(`electricalUscNumber`),
     UNIQUE INDEX `branches_scNumber_key`(`scNumber`),
+    INDEX `branches_id_membershipId_idx`(`id`, `membershipId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -161,6 +164,9 @@ CREATE TABLE `attachments` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `modifiedAt` DATETIME(3) NOT NULL,
 
+    INDEX `attachments_id_idx`(`id`),
+    INDEX `attachments_membershipId_idx`(`membershipId`),
+    UNIQUE INDEX `attachments_membershipId_documentName_key`(`membershipId`, `documentName`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -215,6 +221,23 @@ CREATE TABLE `members_pending_changes` (
     `modifiedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `declineReason` TEXT NULL,
 
+    INDEX `members_pending_changes_id_idx`(`id`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `transaction_history` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `membershipId` VARCHAR(225) NOT NULL,
+    `month` INTEGER NOT NULL,
+    `year` INTEGER NOT NULL,
+    `amount` DECIMAL(10, 2) NOT NULL,
+    `isPaid` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'FALSE',
+    `paidAt` DATETIME(3) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    INDEX `transaction_history_membershipId_idx`(`membershipId`),
+    UNIQUE INDEX `transaction_history_membershipId_month_year_key`(`membershipId`, `month`, `year`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -223,24 +246,24 @@ CREATE TABLE `labours` (
     `labourId` VARCHAR(191) NOT NULL,
     `fullName` VARCHAR(100) NOT NULL,
     `fatherName` VARCHAR(100) NOT NULL,
+    `dob` VARCHAR(50) NOT NULL,
+    `phoneNumber` VARCHAR(13) NOT NULL,
+    `emailId` VARCHAR(50) NULL,
+    `aadharNumber` VARCHAR(12) NOT NULL,
     `permanentAddress` VARCHAR(225) NOT NULL,
     `presentAddress` VARCHAR(225) NOT NULL,
-    `aadharNumber` VARCHAR(12) NOT NULL,
+    `photoPath` VARCHAR(225) NOT NULL,
+    `aadharPath` VARCHAR(225) NOT NULL,
     `panNumber` VARCHAR(12) NOT NULL,
     `esiNumber` VARCHAR(50) NULL,
-    `employedIn` VARCHAR(100) NOT NULL,
-    `employedFrom` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `labourStatus` ENUM('ACTIVE', 'INACTIVE', 'ON_BENCH') NOT NULL DEFAULT 'ACTIVE',
     `assignedTo` VARCHAR(225) NULL,
-    `onBench` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'TRUE',
-    `signaturePath` VARCHAR(225) NOT NULL,
-    `fingerPrint` VARCHAR(225) NOT NULL,
-    `aadharPhotoPath` VARCHAR(225) NOT NULL,
-    `livePhotoPath` VARCHAR(225) NOT NULL,
-    `isActive` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'TRUE',
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `modifiedAt` DATETIME(3) NOT NULL,
     `modifiedBy` INTEGER NULL,
 
+    UNIQUE INDEX `labours_phoneNumber_key`(`phoneNumber`),
+    UNIQUE INDEX `labours_emailId_key`(`emailId`),
     UNIQUE INDEX `labours_aadharNumber_key`(`aadharNumber`),
     UNIQUE INDEX `labours_panNumber_key`(`panNumber`),
     PRIMARY KEY (`labourId`)
@@ -254,6 +277,8 @@ CREATE TABLE `labours_additional_docs` (
     `docFilePath` VARCHAR(100) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
+    INDEX `labours_additional_docs_labourId_idx`(`labourId`),
+    UNIQUE INDEX `labours_additional_docs_labourId_docName_key`(`labourId`, `docName`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -279,6 +304,7 @@ CREATE TABLE `labour_history` (
     `reasonForTransfer` VARCHAR(225) NULL,
     `fromDate` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `toDate` DATETIME(3) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`Id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -402,6 +428,9 @@ ALTER TABLE `members_pending_changes` ADD CONSTRAINT `members_pending_changes_ap
 
 -- AddForeignKey
 ALTER TABLE `members_pending_changes` ADD CONSTRAINT `members_pending_changes_modifiedBy_fkey` FOREIGN KEY (`modifiedBy`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `transaction_history` ADD CONSTRAINT `transaction_history_membershipId_fkey` FOREIGN KEY (`membershipId`) REFERENCES `members`(`membershipId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `labours` ADD CONSTRAINT `labours_modifiedBy_fkey` FOREIGN KEY (`modifiedBy`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
