@@ -15,14 +15,14 @@ const __1 = require("../..");
 const bad_request_1 = require("../../exceptions/bad-request");
 const root_1 = require("../../exceptions/root");
 const addLabour = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const labourDetails = addLabours_1.LabourRegistrationSchema.parse(req.body);
+    const labourDetails = addLabours_1.LabourSchema.parse(req.body);
     try {
         if (!["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
             return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
         }
         const result = yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
             const newLabour = yield addLabourHandler(prisma, labourDetails);
-            const laboursAdditionalDocs = yield laboursAdditionalDocsHandler(prisma, newLabour.labourId, labourDetails.laboursAdditionalDocs);
+            const laboursAdditionalDocs = yield laboursAdditionalDocsHandler(prisma, newLabour.labourId, labourDetails.additionalDocs);
             const laboursHistory = yield createInitialLabourHistory(prisma, newLabour);
             newLabour["laboursAdditionalDocs"] = laboursAdditionalDocs;
             newLabour["laboursHistory"] = laboursHistory;
@@ -37,25 +37,8 @@ const addLabour = (req, res, next) => __awaiter(void 0, void 0, void 0, function
 });
 exports.addLabour = addLabour;
 const addLabourHandler = (prisma, labourDetails) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
     return yield prisma.labours.create({
-        data: {
-            fullName: labourDetails.fullName,
-            fatherName: labourDetails.fatherName,
-            permanentAddress: labourDetails.permanentAddress,
-            presentAddress: labourDetails.presentAddress,
-            aadharNumber: labourDetails.aadharNumber,
-            panNumber: labourDetails.panNumber,
-            esiNumber: labourDetails.esiNumber,
-            employedIn: labourDetails.employedIn,
-            employedFrom: (_a = labourDetails.employedFrom) !== null && _a !== void 0 ? _a : new Date(),
-            assignedTo: (_b = labourDetails.assignedTo) !== null && _b !== void 0 ? _b : null,
-            onBench: labourDetails.assignedTo ? "FALSE" : "TRUE",
-            signaturePath: labourDetails.signaturePath,
-            fingerPrint: labourDetails.fingerPrint,
-            aadharPhotoPath: labourDetails.aadharPhotoPath,
-            livePhotoPath: labourDetails.livePhotoPath,
-        },
+        data: Object.assign({}, labourDetails),
     });
 });
 const laboursAdditionalDocsHandler = (prisma, labourId, laboursAdditionalDocs) => __awaiter(void 0, void 0, void 0, function* () {
@@ -63,7 +46,7 @@ const laboursAdditionalDocsHandler = (prisma, labourId, laboursAdditionalDocs) =
         data: laboursAdditionalDocs.map((laboursAdditionalDoc) => ({
             labourId: labourId,
             docName: laboursAdditionalDoc.docName,
-            docFilePath: laboursAdditionalDoc.docFilePath,
+            docPath: laboursAdditionalDoc.docPath
         })),
         skipDuplicates: true, // Optional: Prevents duplicate entry errors
     });
@@ -74,7 +57,7 @@ const createInitialLabourHistory = (prisma, labour) => __awaiter(void 0, void 0,
         data: {
             labourId: labour.labourId,
             assignedTo: (_a = labour.assignedTo) !== null && _a !== void 0 ? _a : null,
-            onBench: labour.assignedTo ? "FALSE" : "TRUE",
+            onBench: labour.assignedTo ? "FALSE" : labour.labourStatus !== "INACTIVE" ? "FALSE" : "TRUE",
             reasonForTransfer: "Initial registration",
         },
     });

@@ -13,8 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const crypto_1 = __importDefault(require("crypto"));
-const ioredis_1 = __importDefault(require("ioredis"));
-const redis = new ioredis_1.default(); // Connect to Redis server
+const index_1 = require("../../index"); // Assuming redis is exported as a named export from index.ts
 // OTPService class to handle OTP generation, storage, and verification
 class OTPService {
     constructor() {
@@ -34,40 +33,40 @@ class OTPService {
         return __awaiter(this, void 0, void 0, function* () {
             const otp = this.generateOTP();
             // Store OTP with expiry
-            yield redis.set(this.getOTPKey(identifier), otp, "PX", this.OTP_EXPIRY_MS);
+            yield index_1.redis.set(this.getOTPKey(identifier), otp, "PX", this.OTP_EXPIRY_MS);
             // Reset attempt counter
-            yield redis.del(this.getAttemptsKey(identifier));
+            yield index_1.redis.del(this.getAttemptsKey(identifier));
             return otp;
         });
     }
     verifyOTP(identifier, otp) {
         return __awaiter(this, void 0, void 0, function* () {
-            const storedOtp = yield redis.get(this.getOTPKey(identifier));
+            const storedOtp = yield index_1.redis.get(this.getOTPKey(identifier));
             const attemptKey = this.getAttemptsKey(identifier);
             if (!storedOtp)
                 return false;
             if (storedOtp !== otp) {
-                const attempts = parseInt((yield redis.get(attemptKey)) || "0", 10);
+                const attempts = parseInt((yield index_1.redis.get(attemptKey)) || "0", 10);
                 if (attempts + 1 >= this.MAX_ATTEMPTS) {
                     // Exceeded max attempts - block or delete OTP
-                    yield redis.del(this.getOTPKey(identifier));
-                    yield redis.del(attemptKey);
+                    yield index_1.redis.del(this.getOTPKey(identifier));
+                    yield index_1.redis.del(attemptKey);
                 }
                 else {
-                    yield redis.set(attemptKey, (attempts + 1).toString(), "PX", this.OTP_EXPIRY_MS);
+                    yield index_1.redis.set(attemptKey, (attempts + 1).toString(), "PX", this.OTP_EXPIRY_MS);
                 }
                 return false;
             }
             // Success: delete OTP and attempts
-            yield redis.del(this.getOTPKey(identifier));
-            yield redis.del(attemptKey);
+            yield index_1.redis.del(this.getOTPKey(identifier));
+            yield index_1.redis.del(attemptKey);
             return true;
         });
     }
     invalidateOTP(identifier) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield redis.del(this.getOTPKey(identifier));
-            yield redis.del(this.getAttemptsKey(identifier));
+            yield index_1.redis.del(this.getOTPKey(identifier));
+            yield index_1.redis.del(this.getAttemptsKey(identifier));
         });
     }
 }

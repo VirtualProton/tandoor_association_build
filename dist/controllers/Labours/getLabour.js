@@ -29,7 +29,7 @@ const getAllActiveLabours = (req, res, next) => __awaiter(void 0, void 0, void 0
         }
         const labours = yield __1.prismaClient.labours.findMany({
             where: {
-                isActive: "TRUE",
+                labourStatus: "ACTIVE",
             },
             include: {
                 laboursAdditionalDocs: true,
@@ -67,7 +67,7 @@ const getAllInactiveLabours = (req, res, next) => __awaiter(void 0, void 0, void
         }
         const labours = yield __1.prismaClient.labours.findMany({
             where: {
-                isActive: "FALSE",
+                labourStatus: "INACTIVE",
             },
             include: {
                 laboursAdditionalDocs: true,
@@ -105,7 +105,7 @@ const getAllBenchedLabours = (req, res, next) => __awaiter(void 0, void 0, void 
         }
         const labours = yield __1.prismaClient.labours.findMany({
             where: {
-                OR: [{ isActive: "TRUE" }, { onBench: "TRUE" }],
+                labourStatus: "ON_BENCH",
             },
             include: {
                 laboursAdditionalDocs: true,

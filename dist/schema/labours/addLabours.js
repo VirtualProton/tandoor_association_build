@@ -1,35 +1,45 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LabourRegistrationSchema = void 0;
+exports.LabourSchema = void 0;
 const zod_1 = require("zod");
-const Bool = zod_1.z.enum(["TRUE", "FALSE"]);
-const laboursAdditionalDocs = zod_1.z.object({
-    labourId: zod_1.z.string(),
-    docName: zod_1.z.string(),
-    docFilePath: zod_1.z.string()
+// Define the enum used in labourStatus
+const labourStatusEnum = zod_1.z.enum(["ACTIVE", "INACTIVE", "ON_BENCH"]);
+const labourAdditionalDoc = zod_1.z.object({
+    docName: zod_1.z.string().max(100),
+    docPath: zod_1.z.string().max(225),
 });
-exports.LabourRegistrationSchema = zod_1.z.object({
-    fullName: zod_1.z.string(),
-    fatherName: zod_1.z.string(),
-    permanentAddress: zod_1.z.string(),
-    presentAddress: zod_1.z.string(),
-    aadharNumber: zod_1.z.string(),
-    panNumber: zod_1.z.string(),
-    esiNumber: zod_1.z.string(),
-    employedIn: zod_1.z.string(),
-    assignedTo: zod_1.z.string().optional(), // corresponds to `membershipId` from Members
-    onBench: Bool.default("TRUE"),
-    signaturePath: zod_1.z.string(),
-    fingerPrint: zod_1.z.string(),
-    aadharPhotoPath: zod_1.z.string(),
-    livePhotoPath: zod_1.z.string(),
-    laboursAdditionalDocs: zod_1.z.array(laboursAdditionalDocs).default([])
-}).refine((data) => {
-    // Either assignedTo or onBench must be true, but not both
-    const isAssigned = !!data.assignedTo;
-    const isOnBench = data.onBench === "TRUE";
-    return (isAssigned || isOnBench) && !(isAssigned && isOnBench);
-}, {
-    message: "Labour must be either assigned to a member or marked as on bench, not both.",
-    path: ["assignedTo"]
+exports.LabourSchema = zod_1.z
+    .object({
+    fullName: zod_1.z.string().max(100),
+    fatherName: zod_1.z.string().max(100),
+    dob: zod_1.z
+        .string()
+        .max(50)
+        .refine((val) => !isNaN(Date.parse(val)), {
+        message: "Invalid date format",
+    }),
+    phoneNumber: zod_1.z.string().max(13),
+    emailId: zod_1.z.string().max(50).email().optional().nullable(),
+    aadharNumber: zod_1.z.string().length(12, "Aadhar must be 12 digits"),
+    permanentAddress: zod_1.z.string().max(225),
+    presentAddress: zod_1.z.string().max(225),
+    photoPath: zod_1.z.string().max(225),
+    aadharPath: zod_1.z.string().max(225),
+    panNumber: zod_1.z.string().max(12),
+    esiNumber: zod_1.z.string().max(50).optional().nullable(),
+    labourStatus: labourStatusEnum.default("ON_BENCH"),
+    assignedTo: zod_1.z.string().max(225).optional().nullable(),
+    modifiedBy: zod_1.z.number().int().optional().nullable(),
+    additionalDocs: zod_1.z.array(labourAdditionalDoc).default([]),
+})
+    .superRefine((data, ctx) => {
+    if ((data.labourStatus === "INACTIVE" || data.labourStatus === "ON_BENCH") &&
+        data.assignedTo !== null &&
+        data.assignedTo !== undefined) {
+        ctx.addIssue({
+            path: ["assignedTo"],
+            code: zod_1.z.ZodIssueCode.custom,
+            message: "assignedTo must be null when labourStatus is INACTIVE or ON_BENCH",
+        });
+    }
 });

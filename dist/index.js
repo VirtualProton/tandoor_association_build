@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.prismaClient = void 0;
+exports.prismaClient = exports.redis = void 0;
 const express_1 = __importDefault(require("express"));
 const secrets_1 = require("./secrets");
 const route_1 = __importDefault(require("./routes/route"));
@@ -12,7 +12,8 @@ const errors_1 = require("./middlewares/errors");
 const morgan_1 = __importDefault(require("morgan"));
 const logger_1 = __importDefault(require("./utils/logger"));
 const cors_1 = __importDefault(require("cors"));
-const app = (0, express_1.default)();
+const ioredis_1 = __importDefault(require("ioredis"));
+const app = (0, express_1.default)(); // Connect to Redis server
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
@@ -25,6 +26,7 @@ app.get('/', (req, res) => {
     res.send('API is working. CORS is enabled for all origins.');
 });
 app.use('/api', route_1.default);
+exports.redis = new ioredis_1.default();
 exports.prismaClient = new client_1.PrismaClient({
     log: ['query']
 });

@@ -136,7 +136,6 @@ const addMemberHandler = (prisma, memberDetails, user) => __awaiter(void 0, void
             approvalStatus: "APPROVED",
             isPaymentDue: "FALSE",
             membershipStatus: "ACTIVE",
-            nextDueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
             approvedOrDeclinedBy: user.userId,
             approvedOrDeclinedAt: new Date(),
         });
