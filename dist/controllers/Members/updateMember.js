@@ -180,7 +180,7 @@ function applyChanges(prisma, membershipId, changes, existingMember, adminId) {
         if (Object.keys(memberFields).length > 0) {
             yield prisma.members.update({
                 where: { membershipId },
-                data: Object.assign(Object.assign({}, memberFields), { approvalStatus: "APPROVED", membershipStatus: "ACTIVE", approvedOrDeclinedBy: adminId, approvedOrDeclinedAt: new Date(), nextDueDate: new Date(new Date().setMonth(new Date().getMonth() + 1)) }),
+                data: Object.assign(Object.assign({}, memberFields), { approvalStatus: "APPROVED", membershipStatus: "ACTIVE", approvedOrDeclinedBy: adminId, approvedOrDeclinedAt: new Date() }),
             });
         }
     });

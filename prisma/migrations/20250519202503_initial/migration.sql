@@ -17,13 +17,24 @@ CREATE TABLE `users` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `MemberIdTracker` (
+    `id` INTEGER NOT NULL DEFAULT 1,
+    `year` INTEGER NOT NULL,
+    `counter` INTEGER NOT NULL,
+
+    UNIQUE INDEX `MemberIdTracker_year_key`(`year`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `members` (
-    `membershipId` VARCHAR(191) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `membershipId` VARCHAR(225) NOT NULL,
     `approvalStatus` ENUM('PENDING', 'APPROVED', 'DECLINED') NOT NULL DEFAULT 'PENDING',
     `membershipStatus` ENUM('ACTIVE', 'INACTIVE', 'CANCELLED') NOT NULL DEFAULT 'INACTIVE',
     `nextDueDate` DATETIME(3) NULL,
-    `subscriptionAmount` DECIMAL(10, 2) NOT NULL,
     `isPaymentDue` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'TRUE',
+    `doj` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `electricalUscNumber` VARCHAR(225) NOT NULL,
     `scNumber` VARCHAR(225) NOT NULL,
     `applicantName` VARCHAR(50) NOT NULL,
@@ -53,9 +64,11 @@ CREATE TABLE `members` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `modifiedAt` DATETIME(3) NOT NULL,
 
+    UNIQUE INDEX `members_membershipId_key`(`membershipId`),
     UNIQUE INDEX `members_firmName_key`(`firmName`),
     UNIQUE INDEX `members_surveyNumber_key`(`surveyNumber`),
-    PRIMARY KEY (`membershipId`)
+    INDEX `members_membershipId_electricalUscNumber_scNumber_idx`(`membershipId`, `electricalUscNumber`, `scNumber`),
+    PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -102,7 +115,7 @@ CREATE TABLE `branches` (
 
     UNIQUE INDEX `branches_electricalUscNumber_key`(`electricalUscNumber`),
     UNIQUE INDEX `branches_scNumber_key`(`scNumber`),
-    INDEX `branches_id_membershipId_idx`(`id`, `membershipId`),
+    INDEX `branches_id_membershipId_electricalUscNumber_scNumber_idx`(`id`, `membershipId`, `electricalUscNumber`, `scNumber`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -226,18 +239,23 @@ CREATE TABLE `members_pending_changes` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `transaction_history` (
+CREATE TABLE `member_billing_history` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `membershipId` VARCHAR(225) NOT NULL,
-    `month` INTEGER NOT NULL,
-    `year` INTEGER NOT NULL,
-    `amount` DECIMAL(10, 2) NOT NULL,
-    `isPaid` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'FALSE',
-    `paidAt` DATETIME(3) NULL,
+    `fromDate` DATETIME NOT NULL,
+    `toDate` DATETIME NOT NULL,
+    `totalAmount` DECIMAL(10, 2) NOT NULL,
+    `paidAmount` DECIMAL(10, 2) NOT NULL,
+    `dueAmount` DECIMAL(10, 2) NOT NULL,
+    `paymentStatus` ENUM('DUE', 'PARTIAL', 'PAID') NOT NULL DEFAULT 'DUE',
+    `notes` TEXT NULL,
+    `receiptPath` VARCHAR(225) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `modifiedAt` DATETIME(3) NOT NULL,
+    `createdBy` INTEGER NULL,
+    `modifiedBy` INTEGER NULL,
 
-    INDEX `transaction_history_membershipId_idx`(`membershipId`),
-    UNIQUE INDEX `transaction_history_membershipId_month_year_key`(`membershipId`, `month`, `year`),
+    INDEX `member_billing_history_membershipId_id_idx`(`membershipId`, `id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -430,7 +448,13 @@ ALTER TABLE `members_pending_changes` ADD CONSTRAINT `members_pending_changes_ap
 ALTER TABLE `members_pending_changes` ADD CONSTRAINT `members_pending_changes_modifiedBy_fkey` FOREIGN KEY (`modifiedBy`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `transaction_history` ADD CONSTRAINT `transaction_history_membershipId_fkey` FOREIGN KEY (`membershipId`) REFERENCES `members`(`membershipId`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `member_billing_history` ADD CONSTRAINT `member_billing_history_createdBy_fkey` FOREIGN KEY (`createdBy`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `member_billing_history` ADD CONSTRAINT `member_billing_history_modifiedBy_fkey` FOREIGN KEY (`modifiedBy`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `member_billing_history` ADD CONSTRAINT `member_billing_history_membershipId_fkey` FOREIGN KEY (`membershipId`) REFERENCES `members`(`membershipId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `labours` ADD CONSTRAINT `labours_modifiedBy_fkey` FOREIGN KEY (`modifiedBy`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

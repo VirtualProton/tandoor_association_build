@@ -74,6 +74,7 @@ const Declarations = zod_1.z.object({
 // Main Member Sign-Up Schema
 exports.MemberSignUpSchema = zod_1.z.object({
     electricalUscNumber: zod_1.z.string(),
+    doj: zod_1.z.coerce.date().default(new Date()),
     scNumber: zod_1.z.string(),
     applicantName: zod_1.z.string().max(50),
     relation: GuardianRelation.default("SO"),
@@ -83,7 +84,7 @@ exports.MemberSignUpSchema = zod_1.z.object({
     proprietorName: zod_1.z.string().max(50),
     phoneNumber1: zod_1.z.string().max(15),
     phoneNumber2: zod_1.z.string().max(15).optional(),
-    surveyNumber: zod_1.z.number(),
+    surveyNumber: zod_1.z.string().max(100),
     village: zod_1.z.string().max(50),
     zone: zod_1.z.string().max(50),
     mandal: zod_1.z.string().max(50),

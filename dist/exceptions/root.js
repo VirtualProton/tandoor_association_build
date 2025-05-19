@@ -61,4 +61,5 @@ var ErrorCode;
     ErrorCode[ErrorCode["NETWORK_ERROR"] = 5016] = "NETWORK_ERROR";
     ErrorCode[ErrorCode["OTP_GENERATION_FAILED"] = 5017] = "OTP_GENERATION_FAILED";
     ErrorCode[ErrorCode["OTP_VERIFICATION_FAILED"] = 5018] = "OTP_VERIFICATION_FAILED";
+    ErrorCode[ErrorCode["DUPLICATE_ENTRY"] = 5019] = "DUPLICATE_ENTRY";
 })(ErrorCode || (exports.ErrorCode = ErrorCode = {}));

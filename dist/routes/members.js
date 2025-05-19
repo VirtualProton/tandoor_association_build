@@ -9,7 +9,7 @@ const getMember_1 = require("../controllers/Members/getMember");
 const changeApproval_controller_1 = require("../controllers/Members/changeApproval.controller");
 const getPendingChanges_controller_1 = require("../controllers/Members/getPendingChanges.controller");
 const memberApproval_controller_1 = require("../controllers/Members/memberApproval.controller");
-const addMemberBill_controller_1 = require("../controllers/Members/addMemberBill.controller");
+const generateBill_controller_1 = require("../controllers/Bill/generateBill.controller");
 const memberRoutes = (0, express_1.Router)();
 memberRoutes.get('/get_members', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getMember_1.getAllMember));
 memberRoutes.get('/get_executive_members', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getMember_1.getExecutiveMember));
@@ -21,6 +21,6 @@ memberRoutes.post('/add_member', authenticateToken_1.authenticateToken, (0, erro
 memberRoutes.post('/update_member', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(updateMember_1.updateMember));
 memberRoutes.post('/approve_decline_member_changes', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(changeApproval_controller_1.approveOrDeclineMemberChanges));
 memberRoutes.post('/approve_decline_member', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(memberApproval_controller_1.approveOrDeclineMember));
-memberRoutes.post('/generate_bill', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(addMemberBill_controller_1.addbill));
+memberRoutes.post('/generate_bill', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(generateBill_controller_1.generateBill));
 // memberRoutes.get('/tests3', errorHandler(testS3));
 exports.default = memberRoutes;

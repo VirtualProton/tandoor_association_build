@@ -26,38 +26,46 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  createdByUser             User?                   @relation("CreatedByRelation", fields: [createdBy], references: [id], onDelete: SetNull)
-  createdUsers              User[]                  @relation("CreatedByRelation")
-  meetings                  Meetings[]              @relation("Meetings")
-  membersModified           Members[]               @relation("membersModified")
-  labourModifiedBy          Labours[]               @relation("Labours")
-  approvedOrDeclinedMembers Members[]               @relation("ApprovedOrDeclinedRelation")
-  meetingModifiedBy         Meetings[]              @relation("MeetingModifiedBy")
-  vehiclesCreatedBy         Vehicles[]              @relation("vehiclesCreatedBy")
-  vehiclesModifiedBy        Vehicles[]              @relation("vehiclesModifiedBy")
-  memberChangesApprovedBy   MembersPendingChanges[] @relation("memberChangesApprovedBy")
-  memberModifiedByEditor    MembersPendingChanges[] @relation("memberModifiedByEditor")
-  labourModifiedByEditor    LaboursPendingChanges[] @relation("LabourModifiedByEditor")
-  labourChangesApprovedBy   LaboursPendingChanges[] @relation("labourChangesApprovedBy")
+  createdByUser                  User?                   @relation("CreatedByRelation", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdUsers                   User[]                  @relation("CreatedByRelation")
+  meetings                       Meetings[]              @relation("Meetings")
+  membersModified                Members[]               @relation("membersModified")
+  labourModifiedBy               Labours[]               @relation("Labours")
+  approvedOrDeclinedMembers      Members[]               @relation("ApprovedOrDeclinedRelation")
+  meetingModifiedBy              Meetings[]              @relation("MeetingModifiedBy")
+  vehiclesCreatedBy              Vehicles[]              @relation("vehiclesCreatedBy")
+  vehiclesModifiedBy             Vehicles[]              @relation("vehiclesModifiedBy")
+  memberChangesApprovedBy        MembersPendingChanges[] @relation("memberChangesApprovedBy")
+  memberModifiedByEditor         MembersPendingChanges[] @relation("memberModifiedByEditor")
+  labourModifiedByEditor         LaboursPendingChanges[] @relation("LabourModifiedByEditor")
+  labourChangesApprovedBy        LaboursPendingChanges[] @relation("labourChangesApprovedBy")
+  memberBillingHistoryCreatedBy  MemberBillingHistory[]  @relation("MemberBillingHistoryCreatedBy")
+  memberBillingHistoryModifiedBy MemberBillingHistory[]  @relation("MemberBillingHistoryModifiedBy")
 
   @@map("users")
 }
 
+model MemberIdTracker {
+  id      Int  @id @default(1)
+  year    Int  @unique
+  counter Int
+}
+
 model Members {
-  membershipId        String           @id @default(uuid())
+  id        Int           @id @default(autoincrement())
+  membershipId        String           @unique @db.VarChar(225)
   approvalStatus      ApprovalStatus   @default(PENDING)
   membershipStatus    MembershipStatus @default(INACTIVE)
   nextDueDate         DateTime?
-  subscriptionAmount  Decimal          @db.Decimal(10, 2)
   isPaymentDue        Bool             @default(TRUE)
-  // isExecutive         Bool             @default(FALSE)
+  doj                 DateTime         @default(now())
   electricalUscNumber String           @db.VarChar(225)
   scNumber            String           @db.VarChar(225)
   applicantName       String           @db.VarChar(50)
   relation            GuardianRelation @default(SO)
   relativeName        String           @db.VarChar(50)
   gender              Gender           @default(MALE)
-  firmName            String           @unique @db.VarChar(50)
+  firmName            String           @db.VarChar(50)
   proprietorName      String           @db.VarChar(50)
   proprietorStatus    OwnershipType    @default(OWNER)
   proprietorType      BusinessType     @default(OWNED)
@@ -65,7 +73,7 @@ model Members {
   // officeNumber          String           @db.VarChar(15)
   phoneNumber1        String           @db.VarChar(15)
   phoneNumber2        String?          @db.VarChar(15)
-  surveyNumber        Int              @unique
+  surveyNumber        String           @db.VarChar(100)
   village             String           @db.VarChar(50)
   zone                String           @db.VarChar(50)
   mandal              String           @db.VarChar(50)
@@ -82,25 +90,26 @@ model Members {
   createdAt             DateTime  @default(now())
   modifiedAt            DateTime  @updatedAt
 
-  machineryInformations     MachineryInformations[]     @relation("MemberMachinery")
-  branches                  Branches[]                  @relation("Branches")
-  complianceDetails         ComplianceDetails?          @relation("ComplianceDetails")
-  similarMembershipInquiry  SimilarMembershipInquiry?   @relation("SimilarMembershipInquiry")
-  attachments               Attachments[]               @relation("Attachments")
-  proposedMember1           Proposer[]                  @relation("ProposedMember1")
-  proposedMember2           ExecutiveProposer[]         @relation("ProposedMember2")
-  proposer                  Proposer?                   @relation("ValidProposer")
-  executiveProposer         ExecutiveProposer?          @relation("ExecutiveProposer")
-  declarations              Declarations?               @relation("Declarations")
-  partnerDetails            PartnerDetails[]            @relation("PartnerDetails")
-  membersTransactionHistory MembersTransactionHistory[] @relation("MembersTransactionHistory")
-  labours                   Labours[]                   @relation("Labours")
-  labourHistory             LabourHistory[]             @relation("LabourHistory")
-  meetingAttendees          MeetingAttendees[]          @relation("MeetingAttendees")
-  userModified              User?                       @relation("membersModified", fields: [modifiedBy], references: [id], onDelete: SetNull)
-  membersPendingChanges     MembersPendingChanges[]     @relation("MembersPendingChanges")
-  approvedOrDeclinedByUser  User?                       @relation("ApprovedOrDeclinedRelation", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
+  machineryInformations    MachineryInformations[]   @relation("MemberMachinery")
+  branches                 Branches[]                @relation("Branches")
+  complianceDetails        ComplianceDetails?        @relation("ComplianceDetails")
+  similarMembershipInquiry SimilarMembershipInquiry? @relation("SimilarMembershipInquiry")
+  attachments              Attachments[]             @relation("Attachments")
+  proposedMember1          Proposer[]                @relation("ProposedMember1")
+  proposedMember2          ExecutiveProposer[]       @relation("ProposedMember2")
+  proposer                 Proposer?                 @relation("ValidProposer")
+  executiveProposer        ExecutiveProposer?        @relation("ExecutiveProposer")
+  declarations             Declarations?             @relation("Declarations")
+  partnerDetails           PartnerDetails[]          @relation("PartnerDetails")
+  memberBillingHistory     MemberBillingHistory[]    @relation("MemberBillingHistory")
+  labours                  Labours[]                 @relation("Labours")
+  labourHistory            LabourHistory[]           @relation("LabourHistory")
+  meetingAttendees         MeetingAttendees[]        @relation("MeetingAttendees")
+  userModified             User?                     @relation("membersModified", fields: [modifiedBy], references: [id], onDelete: SetNull)
+  membersPendingChanges    MembersPendingChanges[]   @relation("MembersPendingChanges")
+  approvedOrDeclinedByUser User?                     @relation("ApprovedOrDeclinedRelation", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
 
+  @@index([id,membershipId,electricalUscNumber,scNumber])
   @@map("members")
 }
 
@@ -157,7 +166,7 @@ model Branches {
   members               Members                 @relation("Branches", fields: [membershipId], references: [membershipId], onDelete: Cascade)
   machineryInformations MachineryInformations[] @relation("BranchMachinery")
 
-  @@index([id, membershipId])
+  @@index([id, membershipId, electricalUscNumber, scNumber])
   @@map("branches")
 }
 
@@ -294,24 +303,28 @@ model MembersPendingChanges {
   @@map("members_pending_changes")
 }
 
-model MembersTransactionHistory {
-  id           Int       @id @default(autoincrement())
-  membershipId String    @db.VarChar(225)
-  month        Int
-  year         Int
-  amount       Decimal   @db.Decimal(10, 2) // Supports money
-  isPaid       Bool      @default(FALSE) // true means paid
-  paidAt       DateTime? // Date when the payment was made
-  // paymentMode      String            @db.VarChar(50) // e.g., Cash, Cheque, Online
-  // transactionId    String?           @db.VarChar(100) // Optional transaction ID
-  // receiptPath      String?           @db.VarChar(225) // Optional path to the receipt
-  // referenceId       String            @unique @db.VarChar(100) // Optional unique reference ID
-  createdAt    DateTime  @default(now())
-  members      Members   @relation("MembersTransactionHistory", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+model MemberBillingHistory {
+  id            Int           @id @default(autoincrement())
+  membershipId  String        @db.VarChar(225)
+  fromDate      DateTime      @db.DateTime()
+  toDate        DateTime      @db.DateTime() // Date when the payment was made
+  totalAmount   Decimal       @db.Decimal(10, 2) // Supports money
+  paidAmount    Decimal       @db.Decimal(10, 2) // Amount paid
+  dueAmount     Decimal       @db.Decimal(10, 2) // Amount due
+  paymentStatus paymentStatus @default(DUE) // e.g., SUCCESS, PENDING, FAILED
+  notes         String?       @db.Text // Optional notes
+  receiptPath   String?       @db.VarChar(225) // Path to the receipt
+  createdAt     DateTime      @default(now())
+  modifiedAt    DateTime      @updatedAt
+  createdBy     Int?          @db.Int
+  modifiedBy    Int?          @db.Int
+  userCreated   User?         @relation("MemberBillingHistoryCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  userModified  User?         @relation("MemberBillingHistoryModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
+  members       Members       @relation("MemberBillingHistory", fields: [membershipId], references: [membershipId], onDelete: Cascade)
 
-  @@unique([membershipId, month, year]) // Ensures a unique entry per month and year
-  @@index([membershipId]) // Index for faster lookups
-  @@map("transaction_history")
+  // @@unique([membershipId, month, year]) // Ensures a unique entry per month and year
+  @@index([membershipId, id]) // Index for faster lookups
+  @@map("member_billing_history")
 }
 
 model Labours {
@@ -548,10 +561,10 @@ enum ProposerType {
   EXECUTIVE_MEMBER
 }
 
-enum TransactionStatus {
-  SUCCESS
-  PENDING
-  FAILED
+enum paymentStatus {
+  DUE
+  PARTIAL
+  PAID
 }
 
 enum TransactionType {

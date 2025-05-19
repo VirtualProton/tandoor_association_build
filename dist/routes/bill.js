@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const error_handler_1 = require("../error-handler");
+const authenticateToken_1 = require("../middlewares/authenticateToken");
+const getBill_controller_1 = require("../controllers/Bill/getBill.controller");
+const generateBill_controller_1 = require("../controllers/Bill/generateBill.controller");
+const billRoutes = (0, express_1.Router)();
+billRoutes.post('/get_bill', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getBill_controller_1.getBill));
+billRoutes.post('/add_bill', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(generateBill_controller_1.generateBill));
+exports.default = billRoutes;
