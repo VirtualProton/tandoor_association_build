@@ -14,6 +14,7 @@ const addLabours_1 = require("../../schema/labours/addLabours");
 const __1 = require("../..");
 const bad_request_1 = require("../../exceptions/bad-request");
 const root_1 = require("../../exceptions/root");
+const labourID_1 = require("../../utils/labourID");
 const addLabour = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const labourDetails = addLabours_1.LabourSchema.parse(req.body);
     try {
@@ -38,7 +39,7 @@ const addLabour = (req, res, next) => __awaiter(void 0, void 0, void 0, function
 exports.addLabour = addLabour;
 const addLabourHandler = (prisma, labourDetails) => __awaiter(void 0, void 0, void 0, function* () {
     return yield prisma.labours.create({
-        data: Object.assign({}, labourDetails),
+        data: Object.assign({ labourId: yield (0, labourID_1.generateCustomLabourId)(prisma) }, labourDetails),
     });
 });
 const laboursAdditionalDocsHandler = (prisma, labourId, laboursAdditionalDocs) => __awaiter(void 0, void 0, void 0, function* () {

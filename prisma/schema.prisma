@@ -13,6 +13,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model MemberIdTracker {
+  id      Int @id @default(1)
+  year    Int @unique
+  counter Int
+}
+
+model MemberBillIdTracker {
+  id      Int @id @default(1)
+  year    Int @unique
+  counter Int
+}
+
+model LabourIdTracker {
+  id      Int @id @default(1)
+  year    Int @unique
+  counter Int
+}
+
+model VehicleIdTracker {
+  id      Int @id @default(1)
+  year    Int @unique
+  counter Int
+}
+
 //User Table
 model User {
   id        Int      @id @default(autoincrement())
@@ -45,14 +69,8 @@ model User {
   @@map("users")
 }
 
-model MemberIdTracker {
-  id      Int  @id @default(1)
-  year    Int  @unique
-  counter Int
-}
-
 model Members {
-  id        Int           @id @default(autoincrement())
+  id                  Int              @id @default(autoincrement())
   membershipId        String           @unique @db.VarChar(225)
   approvalStatus      ApprovalStatus   @default(PENDING)
   membershipStatus    MembershipStatus @default(INACTIVE)
@@ -109,7 +127,7 @@ model Members {
   membersPendingChanges    MembersPendingChanges[]   @relation("MembersPendingChanges")
   approvedOrDeclinedByUser User?                     @relation("ApprovedOrDeclinedRelation", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
 
-  @@index([id,membershipId,electricalUscNumber,scNumber])
+  @@index([id, membershipId, electricalUscNumber, scNumber])
   @@map("members")
 }
 
@@ -305,6 +323,7 @@ model MembersPendingChanges {
 
 model MemberBillingHistory {
   id            Int           @id @default(autoincrement())
+  billingId     String        @unique @db.VarChar(225)
   membershipId  String        @db.VarChar(225)
   fromDate      DateTime      @db.DateTime()
   toDate        DateTime      @db.DateTime() // Date when the payment was made
@@ -323,12 +342,13 @@ model MemberBillingHistory {
   members       Members       @relation("MemberBillingHistory", fields: [membershipId], references: [membershipId], onDelete: Cascade)
 
   // @@unique([membershipId, month, year]) // Ensures a unique entry per month and year
-  @@index([membershipId, id]) // Index for faster lookups
+  @@index([membershipId, billingId, id]) // Index for faster lookups
   @@map("member_billing_history")
 }
 
 model Labours {
-  labourId         String  @id @default(uuid())
+  id               Int     @id @default(autoincrement())
+  labourId         String  @unique @db.VarChar(225)
   fullName         String  @db.VarChar(100)
   fatherName       String  @db.VarChar(100)
   dob              String  @db.VarChar(50)
@@ -415,12 +435,15 @@ model LabourHistory {
 }
 
 model Vehicles {
-  vehicleId        String             @id @default(uuid())
-  isActive         Bool               @default(TRUE)
-  ownerName        String             @db.VarChar(50)
-  phoneNumber      String             @db.VarChar(13)
-  emailId          String             @db.VarChar(50)
-  vehicleNumber    String             @unique @db.VarChar(20)
+  id                Int           @id @default(autoincrement())
+  vehicleId         String        @unique @db.VarChar(225)
+  vehicleNumber     String        @unique @db.VarChar(20)
+  status            VehicleStatus @default(ACTIVE)
+  driverName        String        @db.VarChar(50)
+  driverPhoneNumber String        @db.VarChar(13)
+  ownerName         String        @db.VarChar(50)
+  ownerPhoneNumber  String        @db.VarChar(13)
+
   createdBy        Int?               @db.Int
   modifiedBy       Int?               @db.Int
   vehicleType      String?            @db.VarChar(50)
@@ -437,11 +460,13 @@ model Vehicles {
 model TripRecords {
   id            Int      @id @default(autoincrement())
   vehicleId     String   @db.VarChar(225)
-  route         String
-  amountPerTrip Float
-  numberOfTrips Int
-  balanceAmount Float    @default(0.0)
+  tripDate      DateTime @db.DateTime()
+  amountPerTrip Float    @default(0.0)
+  numberOfTrips Int      @default(0)
+  totalAmount   Float    @default(0.0)
   amountPaid    Float    @default(0.0)
+  balanceAmount Float    @default(0.0)
+  paymentStatus VehiclePaymentStatus @default(UNPAID)
   createdAt     DateTime @default(now())
   modifiedAt    DateTime @updatedAt
 
@@ -511,6 +536,12 @@ enum Status {
   INACTIVE
 }
 
+enum VehicleStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+}
+
 enum GuardianRelation {
   SO // S/O (Son of)
   DO // D/O (Daughter of)
@@ -563,6 +594,12 @@ enum ProposerType {
 
 enum paymentStatus {
   DUE
+  PARTIAL
+  PAID
+}
+
+enum VehiclePaymentStatus {
+  UNPAID
   PARTIAL
   PAID
 }

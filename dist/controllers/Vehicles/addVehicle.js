@@ -14,6 +14,7 @@ const addvehicle_1 = require("../../schema/Vehicle.ts/addvehicle");
 const __1 = require("../..");
 const bad_request_1 = require("../../exceptions/bad-request");
 const root_1 = require("../../exceptions/root");
+const vehicleID_1 = require("../../utils/vehicleID");
 const addVehicle = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const vehicleDetails = addvehicle_1.VehicleRegistrationSchema.parse(req.body);
@@ -33,12 +34,6 @@ const addVehicle = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
 exports.addVehicle = addVehicle;
 const addVehicleHandler = (prisma, vehicleDetails, userId) => __awaiter(void 0, void 0, void 0, function* () {
     return yield prisma.vehicles.create({
-        data: {
-            ownerName: vehicleDetails.ownerName,
-            phoneNumber: vehicleDetails.phoneNumber,
-            emailId: vehicleDetails.emailId,
-            vehicleNumber: vehicleDetails.vehicleNumber,
-            createdBy: userId
-        },
+        data: Object.assign(Object.assign({ vehicleId: yield (0, vehicleID_1.generateCustomVehicleId)(prisma) }, vehicleDetails), { createdBy: userId }),
     });
 });

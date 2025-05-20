@@ -14,6 +14,7 @@ const billing_1 = require("../../schema/members/billing");
 const __1 = require("../..");
 const bad_request_1 = require("../../exceptions/bad-request");
 const root_1 = require("../../exceptions/root");
+const generateMemberBillID_1 = require("../../utils/generateMemberBillID");
 const generateBill = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const billDetails = billing_1.MemberBillingHistorySchema.parse(req.body);
@@ -23,7 +24,7 @@ const generateBill = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
         // Import the enum type from Prisma client
         const createBill = yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
             return yield prisma.memberBillingHistory.create({
-                data: Object.assign(Object.assign({}, billDetails), { createdBy: req.user.userId }),
+                data: Object.assign(Object.assign({ billingId: yield (0, generateMemberBillID_1.generateCustomMemberBillId)(prisma) }, billDetails), { createdBy: req.user.userId }),
             });
         }));
         return res.status(200).json(createBill);

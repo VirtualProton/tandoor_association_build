@@ -1,4 +1,44 @@
 -- CreateTable
+CREATE TABLE `MemberIdTracker` (
+    `id` INTEGER NOT NULL DEFAULT 1,
+    `year` INTEGER NOT NULL,
+    `counter` INTEGER NOT NULL,
+
+    UNIQUE INDEX `MemberIdTracker_year_key`(`year`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `MemberBillIdTracker` (
+    `id` INTEGER NOT NULL DEFAULT 1,
+    `year` INTEGER NOT NULL,
+    `counter` INTEGER NOT NULL,
+
+    UNIQUE INDEX `MemberBillIdTracker_year_key`(`year`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `LabourIdTracker` (
+    `id` INTEGER NOT NULL DEFAULT 1,
+    `year` INTEGER NOT NULL,
+    `counter` INTEGER NOT NULL,
+
+    UNIQUE INDEX `LabourIdTracker_year_key`(`year`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `VehicleIdTracker` (
+    `id` INTEGER NOT NULL DEFAULT 1,
+    `year` INTEGER NOT NULL,
+    `counter` INTEGER NOT NULL,
+
+    UNIQUE INDEX `VehicleIdTracker_year_key`(`year`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `users` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `fullName` VARCHAR(50) NOT NULL,
@@ -13,16 +53,6 @@ CREATE TABLE `users` (
 
     UNIQUE INDEX `users_email_key`(`email`),
     UNIQUE INDEX `users_phone_key`(`phone`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `MemberIdTracker` (
-    `id` INTEGER NOT NULL DEFAULT 1,
-    `year` INTEGER NOT NULL,
-    `counter` INTEGER NOT NULL,
-
-    UNIQUE INDEX `MemberIdTracker_year_key`(`year`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -48,7 +78,7 @@ CREATE TABLE `members` (
     `sanctionedHP` DECIMAL(10, 2) NOT NULL,
     `phoneNumber1` VARCHAR(15) NOT NULL,
     `phoneNumber2` VARCHAR(15) NULL,
-    `surveyNumber` INTEGER NOT NULL,
+    `surveyNumber` VARCHAR(100) NOT NULL,
     `village` VARCHAR(50) NOT NULL,
     `zone` VARCHAR(50) NOT NULL,
     `mandal` VARCHAR(50) NOT NULL,
@@ -65,9 +95,7 @@ CREATE TABLE `members` (
     `modifiedAt` DATETIME(3) NOT NULL,
 
     UNIQUE INDEX `members_membershipId_key`(`membershipId`),
-    UNIQUE INDEX `members_firmName_key`(`firmName`),
-    UNIQUE INDEX `members_surveyNumber_key`(`surveyNumber`),
-    INDEX `members_membershipId_electricalUscNumber_scNumber_idx`(`membershipId`, `electricalUscNumber`, `scNumber`),
+    INDEX `members_id_membershipId_electricalUscNumber_scNumber_idx`(`id`, `membershipId`, `electricalUscNumber`, `scNumber`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -241,6 +269,7 @@ CREATE TABLE `members_pending_changes` (
 -- CreateTable
 CREATE TABLE `member_billing_history` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `billingId` VARCHAR(225) NOT NULL,
     `membershipId` VARCHAR(225) NOT NULL,
     `fromDate` DATETIME NOT NULL,
     `toDate` DATETIME NOT NULL,
@@ -255,13 +284,15 @@ CREATE TABLE `member_billing_history` (
     `createdBy` INTEGER NULL,
     `modifiedBy` INTEGER NULL,
 
-    INDEX `member_billing_history_membershipId_id_idx`(`membershipId`, `id`),
+    UNIQUE INDEX `member_billing_history_billingId_key`(`billingId`),
+    INDEX `member_billing_history_membershipId_billingId_id_idx`(`membershipId`, `billingId`, `id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `labours` (
-    `labourId` VARCHAR(191) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `labourId` VARCHAR(225) NOT NULL,
     `fullName` VARCHAR(100) NOT NULL,
     `fatherName` VARCHAR(100) NOT NULL,
     `dob` VARCHAR(50) NOT NULL,
@@ -280,11 +311,12 @@ CREATE TABLE `labours` (
     `modifiedAt` DATETIME(3) NOT NULL,
     `modifiedBy` INTEGER NULL,
 
+    UNIQUE INDEX `labours_labourId_key`(`labourId`),
     UNIQUE INDEX `labours_phoneNumber_key`(`phoneNumber`),
     UNIQUE INDEX `labours_emailId_key`(`emailId`),
     UNIQUE INDEX `labours_aadharNumber_key`(`aadharNumber`),
     UNIQUE INDEX `labours_panNumber_key`(`panNumber`),
-    PRIMARY KEY (`labourId`)
+    PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
@@ -329,7 +361,8 @@ CREATE TABLE `labour_history` (
 
 -- CreateTable
 CREATE TABLE `vehicles` (
-    `vehicleId` VARCHAR(191) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `vehicleId` VARCHAR(225) NOT NULL,
     `isActive` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'TRUE',
     `ownerName` VARCHAR(50) NOT NULL,
     `phoneNumber` VARCHAR(13) NOT NULL,
@@ -341,8 +374,9 @@ CREATE TABLE `vehicles` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `modifiedAt` DATETIME(3) NOT NULL,
 
+    UNIQUE INDEX `vehicles_vehicleId_key`(`vehicleId`),
     UNIQUE INDEX `vehicles_vehicleNumber_key`(`vehicleNumber`),
-    PRIMARY KEY (`vehicleId`)
+    PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
