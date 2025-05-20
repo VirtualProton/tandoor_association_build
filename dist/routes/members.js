@@ -10,11 +10,13 @@ const changeApproval_controller_1 = require("../controllers/Members/changeApprov
 const getPendingChanges_controller_1 = require("../controllers/Members/getPendingChanges.controller");
 const memberApproval_controller_1 = require("../controllers/Members/memberApproval.controller");
 const generateBill_controller_1 = require("../controllers/Bill/generateBill.controller");
+const deleteMember_controller_1 = require("../controllers/Members/deleteMember.controller");
 const memberRoutes = (0, express_1.Router)();
 memberRoutes.get('/get_members', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getMember_1.getAllMember));
 memberRoutes.get('/get_executive_members', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getMember_1.getExecutiveMember));
 memberRoutes.get('/get_valid_members', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getMember_1.getValidMember));
 memberRoutes.get('/get_approval_pending_members', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getMember_1.getApprovalPendingMember));
+memberRoutes.get('/get_member/:id', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getMember_1.getMemberById));
 memberRoutes.post('/get_member_changes', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getPendingChanges_controller_1.getMemberChanges));
 memberRoutes.post('/validate_usc_number', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(addMember_1.validateUSCNumber));
 memberRoutes.post('/add_member', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(addMember_1.addMember));
@@ -23,4 +25,5 @@ memberRoutes.post('/approve_decline_member_changes', authenticateToken_1.authent
 memberRoutes.post('/approve_decline_member', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(memberApproval_controller_1.approveOrDeclineMember));
 memberRoutes.post('/generate_bill', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(generateBill_controller_1.generateBill));
 // memberRoutes.get('/tests3', errorHandler(testS3));
+memberRoutes.post('/delete_members', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(deleteMember_controller_1.deleteMembers));
 exports.default = memberRoutes;
