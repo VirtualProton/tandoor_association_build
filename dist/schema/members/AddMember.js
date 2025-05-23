@@ -7,7 +7,7 @@ const zod_1 = require("zod");
 const GuardianRelation = zod_1.z.enum(["SO", "DO", "WO"]);
 const Gender = zod_1.z.enum(["MALE", "FEMALE", "OTHER"]);
 const OwnershipType = zod_1.z.enum(["OWNER", "TENANT", "TRADER"]);
-const BusinessType = zod_1.z.enum(["OWNED", "RENTED", "TRADING", "OTHER"]);
+const BusinessType = zod_1.z.enum(["OWNED", "RENTED", "TRADER", "FACTORY_GIVEN_ON_LEASE"]);
 const Bool = zod_1.z.enum(["TRUE", "FALSE"]);
 // Define the Branch Schema
 const Proposer = zod_1.z.object({

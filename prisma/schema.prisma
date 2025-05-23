@@ -569,8 +569,8 @@ enum OwnershipType {
 enum BusinessType {
   OWNED
   RENTED
-  TRADING
-  OTHER
+  TRADER
+  FACTORY_GIVEN_ON_LEASE
 }
 
 enum Bool {

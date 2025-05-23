@@ -6,8 +6,8 @@ const zod_1 = require("zod");
 const GuardianRelation = zod_1.z.enum(["SO", "DO", "WO"]);
 const Gender = zod_1.z.enum(["MALE", "FEMALE", "OTHER"]);
 const OwnershipType = zod_1.z.enum(["OWNER", "TENANT", "TRADER"]);
-const BusinessType = zod_1.z.enum(["OWNED", "RENTED", "TRADING", "OTHER"]);
-const AttachmentType = zod_1.z.enum(["SALE_DEED", "RENT_AGREEMENT", "OTHER"]);
+const BusinessType = zod_1.z.enum(["OWNED", "RENTED", "TRADER", "FACTORY_GIVEN_ON_LEASE"]);
+// const AttachmentType = z.enum(["SALE_DEED", "RENT_AGREEMENT", "OTHER"]);
 const Bool = zod_1.z.enum(["TRUE", "FALSE"]);
 // Proposer Schema
 const Proposer = zod_1.z.object({
