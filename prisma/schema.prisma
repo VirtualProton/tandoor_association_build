@@ -467,6 +467,8 @@ model TripRecords {
   amountPaid    Float    @default(0.0)
   balanceAmount Float    @default(0.0)
   paymentStatus VehiclePaymentStatus @default(UNPAID)
+  notes         String?  @db.Text               // <-- Optional
+  receiptPath   String?  @db.VarChar(255)       // <-- Optional
   createdAt     DateTime @default(now())
   modifiedAt    DateTime @updatedAt
 

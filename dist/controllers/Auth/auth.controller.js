@@ -91,27 +91,6 @@ const signUp = (req, res, next) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.signUp = signUp;
-// export const login = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ) => {
-//   const { email, password } = req.body;
-//   let user = await prismaClient.user.findFirst({ where: { email } });
-//   if (!user) {
-//     throw Error("User does not exist!");
-//   }
-//   if (!compareSync(password, user.passwordHash)) {
-//     throw Error("Incorrect password");
-//   }
-//   const token = jwt.sign(
-//     {
-//       userId: user.id,
-//     },
-//     JWT_SECRET
-//   );
-//   res.json({ user, token });
-// };
 const requestOTP = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { phone } = req.body;
     try {
@@ -139,21 +118,37 @@ const requestOTP = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
 });
 exports.requestOTP = requestOTP;
 const verifyOTP = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { phone, otp } = req.body;
-    const identifier = phone;
-    if (!identifier || !otp) {
-        next(new bad_request_1.BadRequestsException("Invalid request", root_1.ErrorCode.INCORRECT_PASSWORD));
+    try {
+        const { phone, otp } = req.body;
+        if (!phone || !otp) {
+            return next(new bad_request_1.BadRequestsException("Phone and OTP are required", root_1.ErrorCode.INCORRECT_PASSWORD));
+        }
+        const isValid = yield otp_service_1.default.verifyOTP(phone, otp);
+        if (!isValid) {
+            return next(new bad_request_1.BadRequestsException("Invalid or expired OTP", root_1.ErrorCode.INCORRECT_PASSWORD));
+        }
+        const user = yield __1.prismaClient.user.findFirst({ where: { phone } });
+        if (!user) {
+            return next(new bad_request_1.BadRequestsException("User not found", root_1.ErrorCode.USER_NOT_FOUND));
+        }
+        const cacheKey = `user:phone:${phone}`;
+        const red = yield __1.redis.setex(cacheKey, 604800, user.id.toString()); // 7 days in seconds
+        console.log("redis", red);
+        const token = jwt.sign({
+            userId: user.id,
+            role: user.role,
+            phone: user.phone,
+        }, secrets_1.JWT_SECRET, { expiresIn: "7d" });
+        return res.status(200).json({
+            red,
+            user,
+            token,
+            message: "OTP verified successfully",
+        });
     }
-    const isValid = yield otp_service_1.default.verifyOTP(identifier, otp);
-    if (!isValid) {
-        next(new bad_request_1.BadRequestsException("Invalid or expired OTP", root_1.ErrorCode.INCORRECT_PASSWORD));
+    catch (err) {
+        return next(new bad_request_1.BadRequestsException(err.message, root_1.ErrorCode.INCORRECT_PASSWORD));
+        // next(error);
     }
-    let user = yield __1.prismaClient.user.findFirst({ where: { phone } });
-    const token = jwt.sign({
-        userId: user === null || user === void 0 ? void 0 : user.id,
-        role: user === null || user === void 0 ? void 0 : user.role,
-        phone: user === null || user === void 0 ? void 0 : user.phone,
-    }, secrets_1.JWT_SECRET, { expiresIn: "7d" });
-    return res.status(200).json({ user, token, message: "OTP verified successfully" });
 });
 exports.verifyOTP = verifyOTP;

@@ -17,7 +17,7 @@ const root_1 = require("../../exceptions/root");
 const addTrip = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const tripDetails = addTrip_1.AddTripSchema.parse(req.body);
     try {
-        if (["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
+        if (!["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
             return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
         }
         const result = yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
@@ -27,18 +27,14 @@ const addTrip = (req, res, next) => __awaiter(void 0, void 0, void 0, function* 
         res.status(200).json(result);
     }
     catch (e) {
+        console.error("Error adding trip:", e);
+        // Handle specific error cases if needed
         return next(new bad_request_1.BadRequestsException(e.message, root_1.ErrorCode.BAD_REQUEST));
     }
 });
 exports.addTrip = addTrip;
 const addTripHandler = (prisma, tripDetails) => __awaiter(void 0, void 0, void 0, function* () {
     return yield prisma.tripRecords.create({
-        data: {
-            vehicleId: tripDetails.vehicleId,
-            route: tripDetails.route,
-            amountPerTrip: tripDetails.amountPerTrip,
-            numberOfTrips: tripDetails.numberOfTrips,
-            balanceAmount: tripDetails.amountPerTrip * tripDetails.numberOfTrips,
-        },
+        data: Object.assign({}, tripDetails),
     });
 });
