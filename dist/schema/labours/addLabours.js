@@ -27,6 +27,7 @@ exports.LabourSchema = zod_1.z
     aadharPath: zod_1.z.string().max(225),
     panNumber: zod_1.z.string().max(12),
     esiNumber: zod_1.z.string().max(50).optional().nullable(),
+    eShramId: zod_1.z.string().max(50).optional().nullable(),
     labourStatus: labourStatusEnum.default("ON_BENCH"),
     assignedTo: zod_1.z.string().max(225).optional().nullable(),
     modifiedBy: zod_1.z.number().int().optional().nullable(),

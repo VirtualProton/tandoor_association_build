@@ -9,59 +9,244 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addMember = exports.validateUSCNumber = void 0;
+exports.addMember = exports.validateComplianceNumber = exports.validateUSCAndScNumber = void 0;
 const __1 = require("../..");
 const AddMember_1 = require("../../schema/members/AddMember");
 const bad_request_1 = require("../../exceptions/bad-request");
 const root_1 = require("../../exceptions/root");
 const generateMemberID_1 = require("../../utils/generateMemberID");
 // import { testS3Operations } from "../../services/s3Bucket/s3test";
-const validateUSCNumber = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const validateUSCAndScNumber = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const response = {};
     try {
-        const { electricalUscNumber } = req.body;
-        const member = yield __1.prismaClient.members.findFirst({
-            where: {
-                membershipStatus: { not: "CANCELLED" },
-                OR: [
-                    { electricalUscNumber },
-                    {
-                        branches: {
-                            some: {
-                                electricalUscNumber,
+        const { electricalUscNumber, scNumber } = req.body;
+        if (!electricalUscNumber && !scNumber) {
+            return next(new bad_request_1.BadRequestsException("Electrical USC number or SC number is required", root_1.ErrorCode.BAD_REQUEST));
+        }
+        // Check if either electricalUscNumber or scNumber is provided
+        if (electricalUscNumber && electricalUscNumber.toString().trim()) {
+            const member = yield __1.prismaClient.members.findFirst({
+                where: {
+                    membershipStatus: { not: "CANCELLED" },
+                    OR: [
+                        { electricalUscNumber },
+                        {
+                            branches: {
+                                some: {
+                                    electricalUscNumber,
+                                },
                             },
                         },
-                    },
-                ],
-            },
-            include: {
-                branches: true,
-            },
-        });
-        if (member) {
-            if (member.electricalUscNumber === electricalUscNumber) {
-                res.json({ isMember: true, message: "Already a member" });
+                    ],
+                },
+                select: {
+                    membershipId: true,
+                    firmName: true,
+                },
+            });
+            if (!member) {
+                response["Electrical USC number"] = {
+                    isMember: false,
+                    message: "Not a member",
+                };
             }
             else {
-                const matchingBranch = member.branches.find((branch) => branch.electricalUscNumber === electricalUscNumber);
-                if (matchingBranch) {
-                    res.json({
-                        isMember: true,
-                        membershipId: member.membershipId,
-                        message: `Branch of member ${member.membershipId} `,
-                    });
-                }
-                else {
-                    res.json({ isMember: false, message: "Not a member" });
-                }
+                response["Electrical USC number"] = {
+                    isMember: true,
+                    message: "Already a member",
+                    member,
+                };
             }
         }
-        res.json({ isMember: false, message: "Not a member" });
+        if (scNumber && scNumber.toString().trim()) {
+            const member = yield __1.prismaClient.members.findFirst({
+                where: {
+                    membershipStatus: { not: "CANCELLED" },
+                    OR: [
+                        { scNumber },
+                        {
+                            branches: {
+                                some: {
+                                    scNumber,
+                                },
+                            },
+                        },
+                    ],
+                },
+                select: {
+                    membershipId: true,
+                    firmName: true,
+                },
+            });
+            if (!member) {
+                response["SC number"] = { isMember: false, message: "Not a member" };
+            }
+            else {
+                response["SC number"] = {
+                    isMember: true,
+                    message: "Already a member",
+                    member,
+                };
+            }
+        }
+        res.json(response);
     }
     catch (e) {
+        console.error("Error while validating USC number", e);
         next(new bad_request_1.BadRequestsException("Error while validating USC number", root_1.ErrorCode.BAD_REQUEST));
     }
 });
-exports.validateUSCNumber = validateUSCNumber;
+exports.validateUSCAndScNumber = validateUSCAndScNumber;
+const validateComplianceNumber = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e;
+    const response = {};
+    const { gstInNumber, factoryLicenseNumber, tspcbOrderNumber, mdlNumber, udyamCertificateNumber, } = req.body;
+    try {
+        if (!gstInNumber &&
+            !factoryLicenseNumber &&
+            !tspcbOrderNumber &&
+            !mdlNumber &&
+            !udyamCertificateNumber) {
+            return next(new bad_request_1.BadRequestsException("At least one compliance number is required", root_1.ErrorCode.BAD_REQUEST));
+        }
+        if (gstInNumber && gstInNumber.toString().trim()) {
+            const result = yield __1.prismaClient.complianceDetails.findFirst({
+                where: {
+                    gstInNumber: gstInNumber.toString().trim(),
+                },
+                select: {
+                    membershipId: true,
+                    members: {
+                        select: {
+                            firmName: true,
+                        },
+                    },
+                },
+            });
+            if (!result) {
+                response["GSTIN"] = { isMember: false, message: "Not a member" };
+            }
+            else {
+                response["GSTIN"] = {
+                    isMember: true,
+                    message: "Already a member",
+                    membershipId: result.membershipId,
+                    firmName: (_a = result.members) === null || _a === void 0 ? void 0 : _a.firmName,
+                };
+            }
+        }
+        if (factoryLicenseNumber && factoryLicenseNumber.toString().trim()) {
+            const result = yield __1.prismaClient.complianceDetails.findFirst({
+                where: {
+                    factoryLicenseNumber: factoryLicenseNumber.toString().trim(),
+                },
+                select: {
+                    membershipId: true,
+                    members: {
+                        select: {
+                            firmName: true,
+                        },
+                    },
+                },
+            });
+            if (!result) {
+                response["Factory License Number"] = { isMember: false, message: "Not a member" };
+            }
+            else {
+                response["Factory License Number"] = {
+                    isMember: true,
+                    message: "Already a member",
+                    membershipId: result.membershipId,
+                    firmName: (_b = result.members) === null || _b === void 0 ? void 0 : _b.firmName,
+                };
+            }
+        }
+        if (tspcbOrderNumber && tspcbOrderNumber.toString().trim()) {
+            const result = yield __1.prismaClient.complianceDetails.findFirst({
+                where: {
+                    tspcbOrderNumber: tspcbOrderNumber.toString().trim(),
+                },
+                select: {
+                    membershipId: true,
+                    members: {
+                        select: {
+                            firmName: true,
+                        },
+                    },
+                },
+            });
+            if (!result) {
+                response["TSPCB Order Number"] = { isMember: false, message: "Not a member" };
+            }
+            else {
+                response["TSPCB Order Number"] = {
+                    isMember: true,
+                    message: "Already a member",
+                    membershipId: result.membershipId,
+                    firmName: (_c = result.members) === null || _c === void 0 ? void 0 : _c.firmName,
+                };
+            }
+        }
+        if (mdlNumber && mdlNumber.toString().trim()) {
+            const result = yield __1.prismaClient.complianceDetails.findFirst({
+                where: {
+                    mdlNumber: mdlNumber.toString().trim(),
+                },
+                select: {
+                    membershipId: true,
+                    members: {
+                        select: {
+                            firmName: true,
+                        },
+                    },
+                },
+            });
+            if (!result) {
+                response["MDL Number"] = { isMember: false, message: "Not a member" };
+            }
+            else {
+                response["MDL Number"] = {
+                    isMember: true,
+                    message: "Already a member",
+                    membershipId: result.membershipId,
+                    firmName: (_d = result.members) === null || _d === void 0 ? void 0 : _d.firmName,
+                };
+            }
+        }
+        if (udyamCertificateNumber && udyamCertificateNumber.toString().trim()) {
+            const result = yield __1.prismaClient.complianceDetails.findFirst({
+                where: {
+                    udyamCertificateNumber: udyamCertificateNumber.toString().trim(),
+                },
+                select: {
+                    membershipId: true,
+                    members: {
+                        select: {
+                            firmName: true,
+                        },
+                    },
+                },
+            });
+            if (!result) {
+                response["Udyam Certificate Number"] = { isMember: false, message: "Not a member" };
+            }
+            else {
+                response["Udyam Certificate Number"] = {
+                    isMember: true,
+                    message: "Already a member",
+                    membershipId: result.membershipId,
+                    firmName: (_e = result.members) === null || _e === void 0 ? void 0 : _e.firmName,
+                };
+            }
+        }
+        return res.json(response);
+    }
+    catch (e) {
+        console.error("Error while validating compliance number", e);
+        next(new bad_request_1.BadRequestsException("Error while validating compliance number", root_1.ErrorCode.BAD_REQUEST));
+    }
+});
+exports.validateComplianceNumber = validateComplianceNumber;
 const addMember = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const memberDetails = AddMember_1.MemberSignUpSchema.parse(req.body);
@@ -102,7 +287,7 @@ const addMember = (req, res, next) => __awaiter(void 0, void 0, void 0, function
     }
     catch (e) {
         console.error("inside catch", e.code);
-        if (e.code === 'P2002') {
+        if (e.code === "P2002") {
             // return res.status(400).json({ error: `Duplicate value for ${e.meta?.target}` });
             return next(new bad_request_1.BadRequestsException(`Duplicate value for ${(_a = e.meta) === null || _a === void 0 ? void 0 : _a.target}`, root_1.ErrorCode.BAD_REQUEST));
         }
@@ -113,7 +298,9 @@ exports.addMember = addMember;
 const addMemberHandler = (prisma, memberDetails, user) => __awaiter(void 0, void 0, void 0, function* () {
     const customId = yield (0, generateMemberID_1.generateCustomMemberId)(prisma);
     const data = {
-        membershipId: customId,
+        membershipId: memberDetails.membershipId
+            ? memberDetails.membershipId
+            : customId,
         doj: memberDetails.doj,
         electricalUscNumber: memberDetails.electricalUscNumber,
         scNumber: memberDetails.scNumber,

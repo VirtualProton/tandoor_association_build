@@ -11,6 +11,9 @@ const vehicle_1 = __importDefault(require("./vehicle"));
 const meeting_1 = __importDefault(require("./meeting"));
 const healthCheck_1 = __importDefault(require("./healthCheck"));
 const bill_1 = __importDefault(require("./bill"));
+const leaseQuery_1 = __importDefault(require("./leaseQuery"));
+// This file defines the root router for the application, which aggregates all the individual route modules.
+// It imports the necessary route modules and sets up the root router to use them.
 const rootRouter = (0, express_1.Router)();
 rootRouter.use('/auth', auth_1.default);
 rootRouter.use('/member', members_1.default);
@@ -19,4 +22,5 @@ rootRouter.use('/vehicle', vehicle_1.default);
 rootRouter.use('/meeting', meeting_1.default);
 rootRouter.use('/health', healthCheck_1.default);
 rootRouter.use('/bill', bill_1.default);
+rootRouter.use('/lease_query', leaseQuery_1.default);
 exports.default = rootRouter;

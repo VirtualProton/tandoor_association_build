@@ -73,6 +73,7 @@ const Declarations = zod_1.z.object({
 });
 // Main Member Sign-Up Schema
 exports.MemberSignUpSchema = zod_1.z.object({
+    membershipId: zod_1.z.string().max(225).optional(),
     electricalUscNumber: zod_1.z.string(),
     doj: zod_1.z.coerce.date().default(new Date()),
     scNumber: zod_1.z.string(),

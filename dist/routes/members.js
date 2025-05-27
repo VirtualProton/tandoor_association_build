@@ -18,7 +18,8 @@ memberRoutes.get('/get_valid_members', authenticateToken_1.authenticateToken, (0
 memberRoutes.get('/get_approval_pending_members', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getMember_1.getApprovalPendingMember));
 memberRoutes.get('/get_member/:id', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getMember_1.getMemberById));
 memberRoutes.post('/get_member_changes', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getPendingChanges_controller_1.getMemberChanges));
-memberRoutes.post('/validate_usc_number', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(addMember_1.validateUSCNumber));
+memberRoutes.post('/validate_usc_sc_number', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(addMember_1.validateUSCAndScNumber));
+memberRoutes.post('/validate_compliance_details', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(addMember_1.validateComplianceNumber));
 memberRoutes.post('/add_member', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(addMember_1.addMember));
 memberRoutes.post('/update_member', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(updateMember_1.updateMember));
 memberRoutes.post('/approve_decline_member_changes', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(changeApproval_controller_1.approveOrDeclineMemberChanges));

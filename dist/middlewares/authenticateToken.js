@@ -31,14 +31,14 @@ const authenticateToken = (req, res, next) => __awaiter(void 0, void 0, void 0, 
         // Check if user exists in Redis
         const cacheKey = `user:phone:${decoded.phone}`;
         const cachedUser = yield index_1.redis.get(cacheKey);
-        if (!cachedUser) {
-            return next(new bad_request_1.BadRequestsException("Wrong token, please re-login", root_1.ErrorCode.UNAUTHORIZED));
-        }
-        const userObj = JSON.parse(cachedUser);
-        // console.log(userObj);
-        if (userObj != decoded.userId) {
-            return next(new bad_request_1.BadRequestsException("Wrong token, please re-login", root_1.ErrorCode.UNAUTHORIZED));
-        }
+        // if (!cachedUser) {
+        //   return next(new BadRequestsException("Wrong token, please re-login", ErrorCode.UNAUTHORIZED));
+        // }
+        // const userObj = JSON.parse(cachedUser);
+        // // console.log(userObj);
+        // if (userObj != decoded.userId) {
+        //   return next(new BadRequestsException("Wrong token, please re-login", ErrorCode.UNAUTHORIZED));
+        // }
         req.user = decoded; // Attach user data to request
         next(); // Proceed to the next middleware or route handler
     }

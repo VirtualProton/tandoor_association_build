@@ -16,14 +16,17 @@ const memberAttendees = zod_1.z
     .object({
     zone: zod_1.z.array(zod_1.z.string()).optional(),
     all: zod_1.z.boolean().optional(),
+    allExecutives: zod_1.z.boolean().optional().default(false),
     custom: zod_1.z.array(zod_1.z.string()).optional(),
 })
-    .refine((data) => hasValues(data.custom) || hasValues(data.zone) || data.all, { message: "At least one of 'zone', 'all', or 'custom' must be provided" })
-    .refine((data) => validateMutualExclusion(data, ['zone', 'custom'], 'all'), { message: "When 'all' is true, 'zone' and 'custom' must not be provided", path: ["all"] });
+    .refine((data) => hasValues(data.custom) || data.allExecutives || hasValues(data.zone) || data.all, { message: "At least one of 'zone', 'all', 'allExecutives', or 'custom' must be provided" })
+    .refine((data) => validateMutualExclusion(data, ['zone', 'custom', 'allExecutives'], 'all'), { message: "When 'all' is true, 'zone', 'custom', and 'allExecutives' must not be provided", path: ["all"] });
 // Define a schema for vehicle attendees
 const vehicleAttendees = zod_1.z
     .object({
-    all: zod_1.z.boolean().optional(),
+    owner: zod_1.z.boolean().optional().default(true),
+    driver: zod_1.z.boolean().optional().default(false),
+    all: zod_1.z.boolean().optional().default(false),
     custom: zod_1.z.array(zod_1.z.string()).optional(),
 })
     .refine((data) => data.all || hasValues(data.custom), { message: "At least one of 'all' or 'custom' must be provided" })
@@ -60,6 +63,8 @@ exports.MeetingSchema = zod_1.z
     endTime: zod_1.z.coerce.date(),
     location: zod_1.z.string().max(255).optional(),
     attendees: attendees,
+    createdBy: zod_1.z.string().max(225).optional(),
+    status: MeetingStatusEnum.default("SCHEDULED"),
 })
     .superRefine((data, ctx) => {
     if (data.endTime <= data.startTime) {

@@ -53,7 +53,9 @@ const meetingAttendeesHandler = (prisma, attendees, meetingId) => __awaiter(void
         if (attendees.memberAttendees.all) {
             const allMembers = yield prisma.members.findMany({
                 where: {
-                    isActive: "TRUE",
+                    membershipStatus: {
+                        not: "CANCELLED",
+                    },
                 },
                 select: {
                     membershipId: true,
@@ -66,12 +68,33 @@ const meetingAttendeesHandler = (prisma, attendees, meetingId) => __awaiter(void
                 const zoneMembers = yield prisma.members.findMany({
                     where: {
                         zone: { in: attendees.memberAttendees.zone },
+                        membershipStatus: { not: "CANCELLED" },
                     },
                     select: {
                         membershipId: true,
                     },
                 });
                 meetingAttendees = [...meetingAttendees, ...zoneMembers];
+            }
+            else if (attendees.memberAttendees.allExecutives) {
+                const allExecutives = yield prisma.members.findMany({
+                    where: {
+                        membershipStatus: { not: "CANCELLED" },
+                        similarMembershipInquiry: {
+                            some: {
+                                is_executive_member: "TRUE",
+                            },
+                        },
+                    },
+                    select: {
+                        membershipId: true,
+                    },
+                });
+                // Map to match the expected structure
+                const allExecutivesMapped = allExecutives.map((exec) => ({
+                    membershipId: exec.membershipId,
+                }));
+                meetingAttendees = [...meetingAttendees, ...allExecutivesMapped];
             }
             else if (attendees.memberAttendees.custom.length > 0) {
                 const customMembers = yield prisma.members.findMany({
@@ -97,7 +120,9 @@ const meetingAttendeesHandler = (prisma, attendees, meetingId) => __awaiter(void
         if (attendees.vehicleAttendees.all) {
             const allVehicles = yield prisma.vehicles.findMany({
                 where: {
-                    isActive: "TRUE",
+                    status: {
+                        not: "INACTIVE",
+                    },
                 },
                 select: {
                     vehicleId: true,
@@ -120,6 +145,7 @@ const meetingAttendeesHandler = (prisma, attendees, meetingId) => __awaiter(void
             data: meetingAttendees.map((meetingAttendee) => ({
                 meetingId: meetingId,
                 vehicleId: meetingAttendee.vehicleId,
+                vehicleRole: (attendees.vehicleAttendees.owner && attendees.vehicleAttendees.driver) ? "BOTH" : attendees.vehicleAttendees.owner ? "OWNER" : "DRIVER",
             })),
         });
     }
@@ -128,7 +154,9 @@ const meetingAttendeesHandler = (prisma, attendees, meetingId) => __awaiter(void
         if (attendees.labourAttendees.all) {
             const allLabours = yield prisma.labours.findMany({
                 where: {
-                    isActive: "TRUE",
+                    isActive: {
+                        not: "INACTIVE",
+                    }
                 },
                 select: {
                     labourId: true,
@@ -137,7 +165,7 @@ const meetingAttendeesHandler = (prisma, attendees, meetingId) => __awaiter(void
             meetingAttendees = [...meetingAttendees, ...allLabours];
         }
         else if (attendees.labourAttendees.membershipID.length > 0) {
-            const customLabours = yield prisma.labours.findMany({
+            const LaboursByMember = yield prisma.labours.findMany({
                 where: {
                     labourId: { in: attendees.labourAttendees.membershipID },
                 },
@@ -145,7 +173,7 @@ const meetingAttendeesHandler = (prisma, attendees, meetingId) => __awaiter(void
                     labourId: true,
                 },
             });
-            meetingAttendees = [...meetingAttendees, ...customLabours];
+            meetingAttendees = [...meetingAttendees, ...LaboursByMember];
         }
         else if (attendees.labourAttendees.custom.length > 0) {
             const customLabours = yield prisma.labours.findMany({

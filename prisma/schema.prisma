@@ -37,6 +37,12 @@ model VehicleIdTracker {
   counter Int
 }
 
+model LeaseQueryIdTracker {
+  id      Int @id @default(1)
+  year    Int @unique
+  counter Int
+}
+
 //User Table
 model User {
   id        Int      @id @default(autoincrement())
@@ -65,6 +71,8 @@ model User {
   labourChangesApprovedBy        LaboursPendingChanges[] @relation("labourChangesApprovedBy")
   memberBillingHistoryCreatedBy  MemberBillingHistory[]  @relation("MemberBillingHistoryCreatedBy")
   memberBillingHistoryModifiedBy MemberBillingHistory[]  @relation("MemberBillingHistoryModifiedBy")
+  leaseQueryModifiedBy           LeaseQuery[]            @relation("LeaseQueryModifiedBy")
+  leaseQueryCreatedBy            LeaseQuery[]            @relation("LeaseQueryCreatedBy")
 
   @@map("users")
 }
@@ -126,6 +134,7 @@ model Members {
   userModified             User?                     @relation("membersModified", fields: [modifiedBy], references: [id], onDelete: SetNull)
   membersPendingChanges    MembersPendingChanges[]   @relation("MembersPendingChanges")
   approvedOrDeclinedByUser User?                     @relation("ApprovedOrDeclinedRelation", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
+  leaseQuery               LeaseQuery[]              @relation("LeaseQuery")
 
   @@index([id, membershipId, electricalUscNumber, scNumber])
   @@map("members")
@@ -347,23 +356,23 @@ model MemberBillingHistory {
 }
 
 model Labours {
-  id               Int     @id @default(autoincrement())
-  labourId         String  @unique @db.VarChar(225)
-  fullName         String  @db.VarChar(100)
-  fatherName       String  @db.VarChar(100)
-  dob              String  @db.VarChar(50)
-  phoneNumber      String  @unique @db.VarChar(13)
-  emailId          String? @unique @db.VarChar(50)
-  aadharNumber     String  @unique @db.VarChar(12)
-  permanentAddress String  @db.VarChar(225)
-  presentAddress   String  @db.VarChar(225)
-  photoPath        String  @db.VarChar(225)
-  aadharPath       String  @db.VarChar(225)
-
-  panNumber    String       @unique @db.VarChar(12)
-  esiNumber    String?      @db.VarChar(50)
-  // onBench     
-  labourStatus labourStatus @default(ACTIVE)
+  id               Int          @id @default(autoincrement())
+  labourId         String       @unique @db.VarChar(225)
+  fullName         String       @db.VarChar(100)
+  fatherName       String       @db.VarChar(100)
+  dob              String       @db.VarChar(50)
+  phoneNumber      String       @unique @db.VarChar(13)
+  emailId          String?      @unique @db.VarChar(50)
+  aadharNumber     String       @unique @db.VarChar(12)
+  permanentAddress String       @db.VarChar(225)
+  presentAddress   String       @db.VarChar(225)
+  photoPath        String       @db.VarChar(225)
+  aadharPath       String?      @db.VarChar(225)
+  eShramId         String?      @unique @db.VarChar(50)
+  panNumber        String       @unique @db.VarChar(12)
+  esiNumber        String?      @db.VarChar(50)
+  // onBench           Bool         @default(FALSE)
+  labourStatus     labourStatus @default(ACTIVE)
 
   assignedTo String? @db.VarChar(225)
 
@@ -458,19 +467,19 @@ model Vehicles {
 }
 
 model TripRecords {
-  id            Int      @id @default(autoincrement())
-  vehicleId     String   @db.VarChar(225)
-  tripDate      DateTime @db.DateTime()
-  amountPerTrip Float    @default(0.0)
-  numberOfTrips Int      @default(0)
-  totalAmount   Float    @default(0.0)
-  amountPaid    Float    @default(0.0)
-  balanceAmount Float    @default(0.0)
+  id            Int                  @id @default(autoincrement())
+  vehicleId     String               @db.VarChar(225)
+  tripDate      DateTime             @db.DateTime()
+  amountPerTrip Float                @default(0.0)
+  numberOfTrips Int                  @default(0)
+  totalAmount   Float                @default(0.0)
+  amountPaid    Float                @default(0.0)
+  balanceAmount Float                @default(0.0)
   paymentStatus VehiclePaymentStatus @default(UNPAID)
-  notes         String?  @db.Text               // <-- Optional
-  receiptPath   String?  @db.VarChar(255)       // <-- Optional
-  createdAt     DateTime @default(now())
-  modifiedAt    DateTime @updatedAt
+  notes         String?              @db.Text // <-- Optional
+  receiptPath   String?              @db.VarChar(255) // <-- Optional
+  createdAt     DateTime             @default(now())
+  modifiedAt    DateTime             @updatedAt
 
   vehicles Vehicles? @relation("TripRecord", fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
 
@@ -495,27 +504,85 @@ model Meetings {
 
   User             User               @relation("Meetings", fields: [createdBy], references: [id], onDelete: Cascade)
   meetingAttendees MeetingAttendees[] @relation("MeetingAttendees")
-  // meetingNotes MeetingNotes[]
+  followUpMeetings FollowUpMeeting[]  @relation("FollowUpMeetings")
 
   @@map("meetings")
 }
 
-model MeetingAttendees {
-  id        Int      @id @default(autoincrement())
-  meetingId String   @db.VarChar(225)
-  memberId  String?  @db.VarChar(225) // Reference to Members
-  vehicleId String?  @db.VarChar(225) // Reference to Vehicles
-  labourId  String?  @db.VarChar(225) // Reference to Labours
-  isCustom  Bool     @default(FALSE) // True if manually added
+model FollowUpMeeting {
+  id        String   @id @default(uuid())
+  meetingId String   @db.VarChar(36)
+  dateTime  DateTime
   createdAt DateTime @default(now())
+  meeting   Meetings @relation("FollowUpMeetings", fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@map("follow_up_meetings")
+}
+
+model MeetingAttendees {
+  id           Int          @id @default(autoincrement())
+  meetingId    String       @db.VarChar(225)
+  membershipId String?      @db.VarChar(225) // Reference to Members
+  vehicleId    String?      @db.VarChar(225) // Reference to Vehicles
+  vehicleRole  VehicleRole? // NEW: specifies whether vehicle is owner or driver
+  labourId     String?      @db.VarChar(225) // Reference to Labours
+  isCustom     Bool         @default(FALSE) // True if manually added
+  createdAt    DateTime     @default(now())
 
   meeting Meetings  @relation("MeetingAttendees", fields: [meetingId], references: [id], onDelete: Cascade)
-  member  Members?  @relation("MeetingAttendees", fields: [memberId], references: [membershipId], onDelete: Cascade)
+  member  Members?  @relation("MeetingAttendees", fields: [membershipId], references: [membershipId], onDelete: Cascade)
   vehicle Vehicles? @relation("MeetingAttendees", fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
   labour  Labours?  @relation("MeetingAttendees", fields: [labourId], references: [labourId], onDelete: Cascade)
 
-  @@unique([meetingId, memberId, vehicleId]) // Ensures a unique entry per meeting
+  @@unique([meetingId, membershipId, vehicleId]) // Ensures a unique entry per meeting
   @@map("meeting_attendees")
+}
+
+model LeaseQuery {
+  id                 Int       @id @default(autoincrement())
+  leaseQueryId            String    @unique @db.VarChar(225)
+  membershipId       String    @db.VarChar(225)
+  presentLeaseHolder String    @db.VarChar(50)
+  dateOfLease        DateTime  @db.DateTime()
+  expiryOfLease      DateTime  @db.DateTime()
+  dateOfRenewal      DateTime? @db.DateTime()
+  status             leaseQueryStatus    @default(PENDING)
+  createdAt         DateTime  @default(now())
+  createdBy         Int?      @db.Int
+  createdByUser     User?     @relation("LeaseQueryCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  modifiedAt        DateTime  @updatedAt
+  modifiedBy        Int?      @db.Int
+  modifiedByUser    User?     @relation("LeaseQueryModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
+  members           Members   @relation("LeaseQuery", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+
+  leaseQueryAttachments LeaseQueryAttachments[] @relation("LeaseQueryAttachments")
+  @@map("lease_queries")
+}
+
+model LeaseQueryAttachments {
+  id          Int      @id @default(autoincrement())
+  leaseQueryId     String   @db.VarChar(225)
+  documentName String   @db.VarChar(225)
+  documentPath String   @db.VarChar(225)
+  createdAt   DateTime @default(now())
+  leaseQuery LeaseQuery @relation("LeaseQueryAttachments", fields: [leaseQueryId], references: [leaseQueryId], onDelete: Cascade)
+
+  // @@unique([leaseQueryId, documentName]) // Ensures a unique entry per lease and document name
+  @@index([leaseQueryId])
+  @@map("lease_query_attachments")
+}
+
+enum leaseQueryStatus {
+  PENDING
+  PROCESSING
+  RESOLVED
+  REJECTED
+}
+
+enum VehicleRole {
+  OWNER
+  DRIVER
+  BOTH // For cases where a vehicle has both an owner and a driver 
 }
 
 enum MeetingStatus {
