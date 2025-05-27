@@ -31,17 +31,27 @@ model LabourIdTracker {
   counter Int
 }
 
+
 model VehicleIdTracker {
   id      Int @id @default(1)
   year    Int @unique
   counter Int
 }
 
+
 model LeaseQueryIdTracker {
   id      Int @id @default(1)
   year    Int @unique
   counter Int
 }
+
+
+model TaxInvoiceIdTracker {
+  id      Int @id @default(1)
+  year    Int @unique
+  counter Int
+}
+
 
 //User Table
 model User {
@@ -73,6 +83,8 @@ model User {
   memberBillingHistoryModifiedBy MemberBillingHistory[]  @relation("MemberBillingHistoryModifiedBy")
   leaseQueryModifiedBy           LeaseQuery[]            @relation("LeaseQueryModifiedBy")
   leaseQueryCreatedBy            LeaseQuery[]            @relation("LeaseQueryCreatedBy")
+  taxInvoiceCreatedBy            TaxInvoice[]            @relation("TaxInvoiceCreatedBy")
+  taxInvoiceModifiedBy           TaxInvoice[]            @relation("TaxInvoiceModifiedBy")
 
   @@map("users")
 }
@@ -135,6 +147,7 @@ model Members {
   membersPendingChanges    MembersPendingChanges[]   @relation("MembersPendingChanges")
   approvedOrDeclinedByUser User?                     @relation("ApprovedOrDeclinedRelation", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
   leaseQuery               LeaseQuery[]              @relation("LeaseQuery")
+  taxInvoice               TaxInvoice[]              @relation("TaxInvoice")
 
   @@index([id, membershipId, electricalUscNumber, scNumber])
   @@map("members")
@@ -539,37 +552,65 @@ model MeetingAttendees {
 }
 
 model LeaseQuery {
-  id                 Int       @id @default(autoincrement())
-  leaseQueryId            String    @unique @db.VarChar(225)
-  membershipId       String    @db.VarChar(225)
-  presentLeaseHolder String    @db.VarChar(50)
-  dateOfLease        DateTime  @db.DateTime()
-  expiryOfLease      DateTime  @db.DateTime()
-  dateOfRenewal      DateTime? @db.DateTime()
-  status             leaseQueryStatus    @default(PENDING)
-  createdAt         DateTime  @default(now())
-  createdBy         Int?      @db.Int
-  createdByUser     User?     @relation("LeaseQueryCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  modifiedAt        DateTime  @updatedAt
-  modifiedBy        Int?      @db.Int
-  modifiedByUser    User?     @relation("LeaseQueryModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
-  members           Members   @relation("LeaseQuery", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  id                 Int              @id @default(autoincrement())
+  leaseQueryId       String           @unique @db.VarChar(225)
+  membershipId       String           @db.VarChar(225)
+  presentLeaseHolder String           @db.VarChar(50)
+  dateOfLease        DateTime         @db.DateTime()
+  expiryOfLease      DateTime         @db.DateTime()
+  dateOfRenewal      DateTime?        @db.DateTime()
+  status             leaseQueryStatus @default(PENDING)
+  createdAt          DateTime         @default(now())
+  createdBy          Int?             @db.Int
+  createdByUser      User?            @relation("LeaseQueryCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  modifiedAt         DateTime         @updatedAt
+  modifiedBy         Int?             @db.Int
+  modifiedByUser     User?            @relation("LeaseQueryModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
+  members            Members          @relation("LeaseQuery", fields: [membershipId], references: [membershipId], onDelete: Cascade)
 
   leaseQueryAttachments LeaseQueryAttachments[] @relation("LeaseQueryAttachments")
+
   @@map("lease_queries")
 }
 
 model LeaseQueryAttachments {
-  id          Int      @id @default(autoincrement())
-  leaseQueryId     String   @db.VarChar(225)
-  documentName String   @db.VarChar(225)
-  documentPath String   @db.VarChar(225)
-  createdAt   DateTime @default(now())
-  leaseQuery LeaseQuery @relation("LeaseQueryAttachments", fields: [leaseQueryId], references: [leaseQueryId], onDelete: Cascade)
+  id           Int        @id @default(autoincrement())
+  leaseQueryId String     @db.VarChar(225)
+  documentName String     @db.VarChar(225)
+  documentPath String     @db.VarChar(225)
+  createdAt    DateTime   @default(now())
+  leaseQuery   LeaseQuery @relation("LeaseQueryAttachments", fields: [leaseQueryId], references: [leaseQueryId], onDelete: Cascade)
 
   // @@unique([leaseQueryId, documentName]) // Ensures a unique entry per lease and document name
   @@index([leaseQueryId])
   @@map("lease_query_attachments")
+}
+
+model TaxInvoice {
+  id           Int      @id @default(autoincrement())
+  invoiceId    String   @db.VarChar(225) @unique
+  membershipId String   @db.VarChar(225)
+  invoiceDate  DateTime
+  hsnCode      String   @db.VarChar(225)
+  particular   String   @db.Text
+  stoneCount   Int      @db.Int
+  size         Decimal  @db.Decimal(10, 2)
+  totalSqFeet  Decimal  @db.Decimal(10, 2)
+  ratePerSqFeet Decimal  @db.Decimal(10, 2)
+  amount Decimal  @db.Decimal(10, 2)
+  cGSTInPercent Int @db.Int
+  sGSTInPercent Int @db.Int
+  iGSTInPercent Int @db.Int
+  subTotal Decimal  @db.Decimal(10, 2)
+  total Decimal  @db.Decimal(10, 2)
+
+  createdAt    DateTime @default(now())
+  modifiedAt   DateTime @updatedAt
+  createdBy   Int?     @db.Int
+  modifiedBy  Int?     @db.Int
+  userCreated User?    @relation("TaxInvoiceCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  userModified User?   @relation("TaxInvoiceModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
+  members     Members  @relation("TaxInvoice", fields: [membershipId], references: [membershipId], onDelete: Cascade)
 }
 
 enum leaseQueryStatus {

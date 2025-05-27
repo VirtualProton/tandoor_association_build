@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const error_handler_1 = require("../error-handler");
+const authenticateToken_1 = require("../middlewares/authenticateToken");
+const getTaxInvoice_controller_1 = require("../controllers/TaxInvoice/getTaxInvoice.controller");
+const deleteTaxInvoice_controller_1 = require("../controllers/TaxInvoice/deleteTaxInvoice.controller");
+const addTaxInvoice_controller_1 = require("../controllers/TaxInvoice/addTaxInvoice.controller");
+const updateTaxInvoice_controller_1 = require("../controllers/TaxInvoice/updateTaxInvoice.controller");
+const taxInvoiceRoutes = (0, express_1.Router)();
+taxInvoiceRoutes.get("/get_tax_invoice", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getTaxInvoice_controller_1.getAllTaxInvoice));
+taxInvoiceRoutes.get("/get_tax_invoice_id/:invoiceId", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getTaxInvoice_controller_1.getTaxInvoiceByID));
+taxInvoiceRoutes.get("/get_tax_invoice_member/:membershipId", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getTaxInvoice_controller_1.getTaxInvoiceByID));
+taxInvoiceRoutes.delete("/delete_tax_invoice/:invoiceId", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(deleteTaxInvoice_controller_1.deleteTaxInvoice));
+taxInvoiceRoutes.post("/add_tax_invoice", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(addTaxInvoice_controller_1.addTaxInvoiceController));
+taxInvoiceRoutes.post("/update_tax_invoice", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(updateTaxInvoice_controller_1.updateTaxInvoice));
+exports.default = taxInvoiceRoutes;
