@@ -88,8 +88,8 @@ model User {
   taxInvoiceCreatedBy            TaxInvoice[]            @relation("TaxInvoiceCreatedBy")
   taxInvoiceModifiedBy           TaxInvoice[]            @relation("TaxInvoiceModifiedBy")
 
-  tripRecordsCreatedBy            TripRecords[]            @relation("TripRecordsCreatedBy")
-  tripRecordsModifiedBy           TripRecords[]            @relation("TripRecordsModifiedBy")
+  tripRecordsCreatedBy  TripRecords[] @relation("TripRecordsCreatedBy")
+  tripRecordsModifiedBy TripRecords[] @relation("TripRecordsModifiedBy")
 
   @@map("users")
 }
@@ -499,17 +499,14 @@ model TripRecords {
   receiptPath   String?              @db.VarChar(255) // <-- Optional
   createdAt     DateTime             @default(now())
   modifiedAt    DateTime             @updatedAt
-  createdBy        Int?               @db.Int
-  modifiedBy       Int?               @db.Int  
+  createdBy     Int?                 @db.Int
+  modifiedBy    Int?                 @db.Int
 
-
-  vehicles Vehicles? @relation("TripRecord", fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
-  userCreated      User?              @relation("TripRecordsCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  userModified     User?              @relation("TripRecordsModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
-
+  vehicles     Vehicles? @relation("TripRecord", fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
+  userCreated  User?     @relation("TripRecordsCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  userModified User?     @relation("TripRecordsModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
 
   @@map("trip_record")
-  
 }
 
 model Meetings {
@@ -604,13 +601,6 @@ model TaxInvoice {
   invoiceId     String   @unique @db.VarChar(225)
   membershipId  String   @db.VarChar(225)
   invoiceDate   DateTime
-  hsnCode       String   @db.VarChar(225)
-  particular    String   @db.Text
-  stoneCount    Int      @db.Int
-  size          Decimal  @db.Decimal(10, 2)
-  totalSqFeet   Decimal  @db.Decimal(10, 2)
-  ratePerSqFeet Decimal  @db.Decimal(10, 2)
-  amount        Decimal  @db.Decimal(10, 2)
   cGSTInPercent Int      @db.Int
   sGSTInPercent Int      @db.Int
   iGSTInPercent Int      @db.Int
@@ -625,7 +615,23 @@ model TaxInvoice {
   userModified User?    @relation("TaxInvoiceModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
   members      Members  @relation("TaxInvoice", fields: [membershipId], references: [membershipId], onDelete: Cascade)
 
+  invoiceItem               InvoiceItem[]              @relation("InvoiceItem")
   @@map("tax_invoice")
+}
+
+model InvoiceItem {
+  id            Int     @id @default(autoincrement())
+  invoiceId     String  @db.VarChar(225)
+  hsnCode       String  @db.VarChar(225)
+  particular    String  @db.Text
+  stoneCount    Int     @db.Int
+  size          Decimal @db.Decimal(10, 2)
+  totalSqFeet   Decimal @db.Decimal(10, 2)
+  ratePerSqFeet Decimal @db.Decimal(10, 2)
+  amount        Decimal @db.Decimal(10, 2)
+
+  TaxInvoice TaxInvoice @relation("InvoiceItem", fields: [invoiceId], references: [invoiceId], onDelete: Cascade)
+  @@map("invoice_item")
 }
 
 enum leaseQueryStatus {

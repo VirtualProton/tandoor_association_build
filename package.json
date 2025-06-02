@@ -1,8 +1,11 @@
 {
-  "name": "tandur_association",
+  "name": "tandurmart",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "prisma":{
+    "seed": "ts-node prisma/seed.ts"
+  },
   "scripts": {
     "start": "npx nodemon",
     "build": "tsc",

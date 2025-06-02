@@ -27,22 +27,50 @@ const root_1 = require("../../exceptions/root");
 const updateTaxInvoice_1 = require("../../schema/taxInvoice/updateTaxInvoice");
 const updateTaxInvoice = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const taxInvoiceData = updateTaxInvoice_1.TaxInvoicePartialUpdateSchema.parse(req.body);
+        const taxInvoiceData = updateTaxInvoice_1.updateTaxInvoiceSchema.parse(req.body);
         if (!["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
             return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
         }
         // Exclude invoiceId from the update data
-        const { invoiceId } = taxInvoiceData, updateData = __rest(taxInvoiceData, ["invoiceId"]);
-        const updatedTaxInvoice = yield __1.prismaClient.taxInvoice.update({
-            where: { invoiceId },
-            data: Object.assign(Object.assign({}, updateData), { modifiedBy: req.user.userId }),
-        });
+        const { invoiceId, newInvoiceItem, updateInvoiceItem, deleteInvoiceItem } = taxInvoiceData, updateData = __rest(taxInvoiceData, ["invoiceId", "newInvoiceItem", "updateInvoiceItem", "deleteInvoiceItem"]);
+        yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
+            if (deleteInvoiceItem && deleteInvoiceItem.length > 0) {
+                const deleteIds = deleteInvoiceItem.map((item) => item.id);
+                yield prisma.invoiceItem.deleteMany({
+                    where: {
+                        id: {
+                            in: deleteIds,
+                        },
+                        invoiceId: invoiceId,
+                    },
+                });
+            }
+            if (newInvoiceItem && newInvoiceItem.length > 0) {
+                yield __1.prismaClient.invoiceItem.createMany({
+                    data: newInvoiceItem.map((item) => (Object.assign(Object.assign({}, item), { invoiceId: invoiceId }))),
+                });
+            }
+            if (updateInvoiceItem && updateInvoiceItem.length > 0) {
+                for (const item of updateInvoiceItem) {
+                    const { id } = item, itemData = __rest(item, ["id"]);
+                    yield __1.prismaClient.invoiceItem.update({
+                        where: { id, invoiceId },
+                        data: itemData,
+                    });
+                }
+            }
+            // Ensure invoiceId is not updated
+            yield __1.prismaClient.taxInvoice.update({
+                where: { invoiceId },
+                data: Object.assign(Object.assign({}, updateData), { modifiedBy: req.user.userId }),
+            });
+        }));
         return res.status(200).json({
-            message: "Tax invoice updated successfully",
-            data: updatedTaxInvoice,
+            message: `Tax invoice ${invoiceId} updated successfully`,
         });
     }
     catch (err) {
+        console.log(err);
         return next(new bad_request_1.BadRequestsException(err.message, root_1.ErrorCode.BAD_REQUEST));
     }
 });
