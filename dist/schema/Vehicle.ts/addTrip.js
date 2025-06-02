@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AddTripSchema = void 0;
 const zod_1 = require("zod");
 exports.AddTripSchema = zod_1.z.object({
+    tripId: zod_1.z.string().optional(),
     vehicleId: zod_1.z.string(),
     tripDate: zod_1.z.coerce.date(),
     amountPerTrip: zod_1.z.coerce.number().nonnegative().max(99999999.99).default(0.0),

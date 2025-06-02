@@ -31,13 +31,11 @@ model LabourIdTracker {
   counter Int
 }
 
-
 model VehicleIdTracker {
   id      Int @id @default(1)
   year    Int @unique
   counter Int
 }
-
 
 model LeaseQueryIdTracker {
   id      Int @id @default(1)
@@ -45,13 +43,17 @@ model LeaseQueryIdTracker {
   counter Int
 }
 
-
 model TaxInvoiceIdTracker {
   id      Int @id @default(1)
   year    Int @unique
   counter Int
 }
 
+model TripIdTracker {
+  id      Int @id @default(1)
+  year    Int @unique
+  counter Int
+}
 
 //User Table
 model User {
@@ -85,6 +87,9 @@ model User {
   leaseQueryCreatedBy            LeaseQuery[]            @relation("LeaseQueryCreatedBy")
   taxInvoiceCreatedBy            TaxInvoice[]            @relation("TaxInvoiceCreatedBy")
   taxInvoiceModifiedBy           TaxInvoice[]            @relation("TaxInvoiceModifiedBy")
+
+  tripRecordsCreatedBy            TripRecords[]            @relation("TripRecordsCreatedBy")
+  tripRecordsModifiedBy           TripRecords[]            @relation("TripRecordsModifiedBy")
 
   @@map("users")
 }
@@ -481,6 +486,7 @@ model Vehicles {
 
 model TripRecords {
   id            Int                  @id @default(autoincrement())
+  tripId        String               @unique @db.VarChar(225)
   vehicleId     String               @db.VarChar(225)
   tripDate      DateTime             @db.DateTime()
   amountPerTrip Float                @default(0.0)
@@ -493,10 +499,17 @@ model TripRecords {
   receiptPath   String?              @db.VarChar(255) // <-- Optional
   createdAt     DateTime             @default(now())
   modifiedAt    DateTime             @updatedAt
+  createdBy        Int?               @db.Int
+  modifiedBy       Int?               @db.Int  
+
 
   vehicles Vehicles? @relation("TripRecord", fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
+  userCreated      User?              @relation("TripRecordsCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  userModified     User?              @relation("TripRecordsModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
+
 
   @@map("trip_record")
+  
 }
 
 model Meetings {
@@ -587,30 +600,32 @@ model LeaseQueryAttachments {
 }
 
 model TaxInvoice {
-  id           Int      @id @default(autoincrement())
-  invoiceId    String   @db.VarChar(225) @unique
-  membershipId String   @db.VarChar(225)
-  invoiceDate  DateTime
-  hsnCode      String   @db.VarChar(225)
-  particular   String   @db.Text
-  stoneCount   Int      @db.Int
-  size         Decimal  @db.Decimal(10, 2)
-  totalSqFeet  Decimal  @db.Decimal(10, 2)
+  id            Int      @id @default(autoincrement())
+  invoiceId     String   @unique @db.VarChar(225)
+  membershipId  String   @db.VarChar(225)
+  invoiceDate   DateTime
+  hsnCode       String   @db.VarChar(225)
+  particular    String   @db.Text
+  stoneCount    Int      @db.Int
+  size          Decimal  @db.Decimal(10, 2)
+  totalSqFeet   Decimal  @db.Decimal(10, 2)
   ratePerSqFeet Decimal  @db.Decimal(10, 2)
-  amount Decimal  @db.Decimal(10, 2)
-  cGSTInPercent Int @db.Int
-  sGSTInPercent Int @db.Int
-  iGSTInPercent Int @db.Int
-  subTotal Decimal  @db.Decimal(10, 2)
-  total Decimal  @db.Decimal(10, 2)
+  amount        Decimal  @db.Decimal(10, 2)
+  cGSTInPercent Int      @db.Int
+  sGSTInPercent Int      @db.Int
+  iGSTInPercent Int      @db.Int
+  subTotal      Decimal  @db.Decimal(10, 2)
+  total         Decimal  @db.Decimal(10, 2)
 
   createdAt    DateTime @default(now())
   modifiedAt   DateTime @updatedAt
-  createdBy   Int?     @db.Int
-  modifiedBy  Int?     @db.Int
-  userCreated User?    @relation("TaxInvoiceCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  userModified User?   @relation("TaxInvoiceModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
-  members     Members  @relation("TaxInvoice", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  createdBy    Int?     @db.Int
+  modifiedBy   Int?     @db.Int
+  userCreated  User?    @relation("TaxInvoiceCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  userModified User?    @relation("TaxInvoiceModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
+  members      Members  @relation("TaxInvoice", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+
+  @@map("tax_invoice")
 }
 
 enum leaseQueryStatus {

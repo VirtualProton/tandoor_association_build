@@ -44,7 +44,7 @@ const getAllVehiclesDetails = (req, res, next) => __awaiter(void 0, void 0, void
 exports.getAllVehiclesDetails = getAllVehiclesDetails;
 const getVehicleByIdOrVehicleNumber = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const input = req.params.id;
+        const input = req.params.vehicleId;
         if (![
             "ADMIN",
             "ADMIN_VIEWER",
