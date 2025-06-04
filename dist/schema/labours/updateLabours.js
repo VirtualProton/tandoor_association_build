@@ -3,11 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LabourPartialUpdateSchema = exports.LabourUpdateSchema = void 0;
 const zod_1 = require("zod");
 // Define the enum used in labourStatus
-const labourStatusEnum = zod_1.z.enum(["ACTIVE", "INACTIVE", "ON_BENCH"]);
+const labourStatusEnum = zod_1.z.enum(["ACTIVE", "INACTIVE"]);
 const labourAdditionalDoc = zod_1.z.object({
-    id: zod_1.z.string().optional(),
+    id: zod_1.z.number().int().optional(),
     docName: zod_1.z.string().max(100),
-    docPath: zod_1.z.string().max(225),
+    docFilePath: zod_1.z.string().max(225),
 });
 // Full registration schema (for Create)
 exports.LabourUpdateSchema = zod_1.z.object({
@@ -30,16 +30,19 @@ exports.LabourUpdateSchema = zod_1.z.object({
     panNumber: zod_1.z.string().max(12),
     esiNumber: zod_1.z.string().max(50).optional().nullable(),
     eShramId: zod_1.z.string().max(50).optional().nullable(),
-    labourStatus: labourStatusEnum.default("ON_BENCH"),
+    labourStatus: labourStatusEnum,
     assignedTo: zod_1.z.string().max(225).optional().nullable(),
-    modifiedBy: zod_1.z.number().int().optional().nullable(),
-    additionalDocs: zod_1.z.array(labourAdditionalDoc).default([]),
+    reasonForTransfer: zod_1.z.string().max(225).optional().nullable(),
+    newAdditionalDocs: zod_1.z.array(labourAdditionalDoc).default([]),
+    updateAdditionalDocs: zod_1.z.array(labourAdditionalDoc).default([]),
+    deleteAdditionalDocs: zod_1.z.array(zod_1.z.object({
+        id: zod_1.z.number().int()
+    }))
 });
 // PATCH schema (for Update)
 exports.LabourPartialUpdateSchema = exports.LabourUpdateSchema.partial()
     .extend({
     labourId: zod_1.z.string(), // labourId must still be required
-    laboursAdditionalDocs: zod_1.z.array(labourAdditionalDoc).optional() // <-- loose
 })
     .refine((data) => Object.keys(data).length > 1, {
     message: "At least one field (besides labourId) must be provided for update."

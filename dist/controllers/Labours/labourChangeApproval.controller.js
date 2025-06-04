@@ -20,33 +20,42 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateLabour = void 0;
+exports.approveOrDeclineLabourChanges = void 0;
 const __1 = require("../..");
-const root_1 = require("../../exceptions/root");
 const bad_request_1 = require("../../exceptions/bad-request");
-const updateLabours_1 = require("../../schema/labours/updateLabours");
-const updateLabour = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const partialUpdateData = updateLabours_1.LabourPartialUpdateSchema.parse(req.body);
+const root_1 = require("../../exceptions/root");
+const approveOrDeclineLabourChanges = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        if (!["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
+        const { id, action, note } = req.body;
+        if (req.user.role !== "ADMIN") {
             throw new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED);
         }
-        console.log(req.user.role);
-        if (["TSMWA_EDITOR", "TQMA_EDITOR"].includes(req.user.role)) {
-            const { labourId } = partialUpdateData;
-            yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
-                yield prisma.laboursPendingChanges.create({
-                    data: {
-                        labourId,
-                        updatedData: partialUpdateData, // If updatedData is not already JSON, use JSON.stringify(updatedData)
-                        modifiedBy: req.user.userId,
-                        // note: "" // Provide an appropriate note or leave as empty string if not applicable
-                    }
-                });
-            }));
-            return res.status(200).json({ message: `Labour ${partialUpdateData.labourId} updated data submitted for approval` });
+        if (!["APPROVED", "DECLINED"].includes(action.toUpperCase())) {
+            throw new bad_request_1.BadRequestsException("Invalid action", root_1.ErrorCode.INVALID_INPUT);
+        }
+        if (["DECLINED"].includes(action.toUpperCase())) {
+            yield __1.prismaClient.laboursPendingChanges.update({
+                where: { id },
+                data: {
+                    approvalStatus: action.toUpperCase(),
+                    approvedOrDeclinedBy: req.user.userId,
+                    note: note,
+                },
+            });
+            return res.status(200).json({ message: `Labour update data declined` });
+        }
+        const pendingChange = yield __1.prismaClient.laboursPendingChanges.findUnique({
+            where: {
+                id,
+            },
+        });
+        if (!pendingChange || pendingChange.approvalStatus !== "PENDING") {
+            throw new bad_request_1.BadRequestsException("Pending change not found or already processed", root_1.ErrorCode.NO_DATA_PROVIDED);
         }
         yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
+            const { updatedData } = pendingChange;
+            // Cast updatedData to the expected shape
+            const partialUpdateData = updatedData;
             const { labourId, deleteAdditionalDocs, newAdditionalDocs, updateAdditionalDocs, reasonForTransfer, labourStatus, assignedTo } = partialUpdateData, remainingData = __rest(partialUpdateData, ["labourId", "deleteAdditionalDocs", "newAdditionalDocs", "updateAdditionalDocs", "reasonForTransfer", "labourStatus", "assignedTo"]);
             if (deleteAdditionalDocs && deleteAdditionalDocs.length > 0) {
                 yield prisma.laboursAdditionalDocs.deleteMany({
@@ -82,7 +91,7 @@ const updateLabour = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
             console.log(remainingData);
             yield prisma.labours.update({
                 where: { labourId },
-                data: Object.assign(Object.assign({}, remainingData), { labourStatus, assignedTo: labourStatus === "ACTIVE" ? assignedTo : null, modifiedBy: req.user.userId })
+                data: Object.assign(Object.assign({}, remainingData), { labourStatus: labourStatus, assignedTo: labourStatus === "ACTIVE" ? assignedTo : null, modifiedBy: req.user.userId })
             });
             if (labour && (assignedTo || assignedTo == null) && partialUpdateData.assignedTo !== labour.assignedTo && labourStatus !== "INACTIVE") {
                 yield prisma.labourHistory.updateMany({
@@ -115,11 +124,13 @@ const updateLabour = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
                 });
             }
         }));
-        return res.status(200).json({ message: `Labour ${partialUpdateData.labourId} updated successfully` });
+        return res
+            .status(200)
+            .json({ message: `Labour ${pendingChange.labourId} update approved` });
     }
-    catch (error) {
-        console.error("Error in updateLabour:", error);
-        return next(new bad_request_1.BadRequestsException(error.message, root_1.ErrorCode.BAD_REQUEST));
+    catch (err) {
+        console.log(err);
+        next(new bad_request_1.BadRequestsException("Failed to fetch labours", root_1.ErrorCode.SERVER_ERROR));
     }
 });
-exports.updateLabour = updateLabour;
+exports.approveOrDeclineLabourChanges = approveOrDeclineLabourChanges;

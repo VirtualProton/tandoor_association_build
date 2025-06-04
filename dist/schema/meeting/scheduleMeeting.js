@@ -11,16 +11,22 @@ const validateMutualExclusion = (data, fields, exclusion) => {
 };
 // Define a schema for MeetingStatus Enum
 const MeetingStatusEnum = zod_1.z.enum(["SCHEDULED", "CANCELLED", "COMPLETED"]);
+const followUpMeeting = zod_1.z.object({
+    dateTime: zod_1.z.coerce.date().refine((date) => date > new Date(), {
+        message: "Meeting date must be in the future",
+    }),
+});
 // Define a schema for member attendees
 const memberAttendees = zod_1.z
     .object({
     zone: zod_1.z.array(zod_1.z.string()).optional(),
+    mandal: zod_1.z.array(zod_1.z.string()).optional(),
     all: zod_1.z.boolean().optional(),
     allExecutives: zod_1.z.boolean().optional().default(false),
     custom: zod_1.z.array(zod_1.z.string()).optional(),
 })
-    .refine((data) => hasValues(data.custom) || data.allExecutives || hasValues(data.zone) || data.all, { message: "At least one of 'zone', 'all', 'allExecutives', or 'custom' must be provided" })
-    .refine((data) => validateMutualExclusion(data, ['zone', 'custom', 'allExecutives'], 'all'), { message: "When 'all' is true, 'zone', 'custom', and 'allExecutives' must not be provided", path: ["all"] });
+    .refine((data) => hasValues(data.custom) || data.allExecutives || hasValues(data.zone) || data.all, { message: "At least one of 'zone', 'all', 'allExecutives', 'mandal',  or 'custom' must be provided" })
+    .refine((data) => validateMutualExclusion(data, ['zone', 'custom', 'allExecutives', 'mandal'], 'all'), { message: "When 'all' is true, 'zone', 'custom', and 'allExecutives' must not be provided", path: ["all"] });
 // Define a schema for vehicle attendees
 const vehicleAttendees = zod_1.z
     .object({
@@ -60,18 +66,8 @@ exports.MeetingSchema = zod_1.z
     startTime: zod_1.z.coerce.date().refine((date) => date > new Date(), {
         message: "Meeting date must be in the future",
     }),
-    endTime: zod_1.z.coerce.date(),
     location: zod_1.z.string().max(255).optional(),
     attendees: attendees,
-    createdBy: zod_1.z.string().max(225).optional(),
     status: MeetingStatusEnum.default("SCHEDULED"),
-})
-    .superRefine((data, ctx) => {
-    if (data.endTime <= data.startTime) {
-        ctx.addIssue({
-            code: zod_1.z.ZodIssueCode.custom,
-            path: ["endTime"],
-            message: "End time must be after start time",
-        });
-    }
+    followUpMeeting: zod_1.z.array(followUpMeeting).optional()
 });

@@ -8,6 +8,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addLabour = void 0;
 const addLabours_1 = require("../../schema/labours/addLabours");
@@ -22,8 +33,9 @@ const addLabour = (req, res, next) => __awaiter(void 0, void 0, void 0, function
             return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
         }
         const result = yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
-            const newLabour = yield addLabourHandler(prisma, labourDetails);
-            const laboursAdditionalDocs = yield laboursAdditionalDocsHandler(prisma, newLabour.labourId, labourDetails.additionalDocs);
+            const { additionalDocs } = labourDetails, labourData = __rest(labourDetails, ["additionalDocs"]);
+            const newLabour = yield addLabourHandler(prisma, labourData);
+            const laboursAdditionalDocs = yield laboursAdditionalDocsHandler(prisma, newLabour.labourId, additionalDocs);
             const laboursHistory = yield createInitialLabourHistory(prisma, newLabour);
             newLabour["laboursAdditionalDocs"] = laboursAdditionalDocs;
             newLabour["laboursHistory"] = laboursHistory;
@@ -47,19 +59,20 @@ const laboursAdditionalDocsHandler = (prisma, labourId, laboursAdditionalDocs) =
         data: laboursAdditionalDocs.map((laboursAdditionalDoc) => ({
             labourId: labourId,
             docName: laboursAdditionalDoc.docName,
-            docPath: laboursAdditionalDoc.docPath
+            docFilePath: laboursAdditionalDoc.docFilePath
         })),
         skipDuplicates: true, // Optional: Prevents duplicate entry errors
     });
 });
 const createInitialLabourHistory = (prisma, labour) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
+    const assignedTo = (_a = labour.assignedTo) !== null && _a !== void 0 ? _a : null;
     return yield prisma.labourHistory.create({
         data: {
             labourId: labour.labourId,
-            assignedTo: (_a = labour.assignedTo) !== null && _a !== void 0 ? _a : null,
-            onBench: labour.assignedTo ? "FALSE" : labour.labourStatus !== "INACTIVE" ? "FALSE" : "TRUE",
-            reasonForTransfer: "Initial registration",
+            assignedTo: assignedTo,
+            onBench: assignedTo ? "FALSE" : "TRUE",
+            reasonForTransfer: "Initial assign",
         },
     });
 });

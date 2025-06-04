@@ -27,10 +27,7 @@ const getTaxInvoiceByID = (req, res, next) => __awaiter(void 0, void 0, void 0, 
     try {
         const { invoiceId } = req.params;
         const taxInvoice = yield __1.prismaClient.taxInvoice.findMany({
-            where: { invoiceId: invoiceId },
-            include: {
-                invoiceItem: true
-            }
+            where: { invoiceId: invoiceId }
         });
         if (!taxInvoice || taxInvoice.length === 0) {
             return next(new bad_request_1.BadRequestsException("Tax invoice not found", root_1.ErrorCode.NOT_FOUND));

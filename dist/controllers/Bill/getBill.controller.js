@@ -15,7 +15,7 @@ const bad_request_1 = require("../../exceptions/bad-request");
 const root_1 = require("../../exceptions/root");
 const getBill = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        let { paymentStatus } = req.body;
+        let { paymentStatus } = req.params;
         paymentStatus = paymentStatus === null || paymentStatus === void 0 ? void 0 : paymentStatus.toUpperCase();
         if (!["ADMIN", "ADMIN_VIEWER", "TSMWA_EDITOR", "TSMWA_VIEWER", "TQMA_EDITOR", "TQMA_VIEWER"].includes(req.user.role)) {
             return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
@@ -30,7 +30,7 @@ const getBill = (req, res, next) => __awaiter(void 0, void 0, void 0, function* 
         else {
             const AllBill = yield __1.prismaClient.memberBillingHistory.findMany({
                 where: {
-                    paymentStatus
+                    paymentStatus: paymentStatus // Replace 'any' with the actual enum type if imported, e.g., as PaymentStatusEnum
                 }
             });
             return res.status(200).json(AllBill);

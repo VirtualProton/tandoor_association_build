@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllBenchedLabours = exports.getAllInactiveLabours = exports.getAllActiveLabours = void 0;
+exports.getLabourById = exports.getAllBenchedLabours = exports.getAllInactiveLabours = exports.getAllActiveLabours = void 0;
 const client_1 = require("@prisma/client");
 const __1 = require("../..");
 const bad_request_1 = require("../../exceptions/bad-request");
@@ -34,7 +34,7 @@ const getAllActiveLabours = (req, res, next) => __awaiter(void 0, void 0, void 0
             include: {
                 laboursAdditionalDocs: true,
                 LabourHistory: true,
-                members: {
+                labourAssignedTo: {
                     select: {
                         membershipId: true,
                         firmName: true,
@@ -72,7 +72,7 @@ const getAllInactiveLabours = (req, res, next) => __awaiter(void 0, void 0, void
             include: {
                 laboursAdditionalDocs: true,
                 LabourHistory: true,
-                members: {
+                labourAssignedTo: {
                     select: {
                         membershipId: true,
                         firmName: true,
@@ -105,12 +105,12 @@ const getAllBenchedLabours = (req, res, next) => __awaiter(void 0, void 0, void 
         }
         const labours = yield __1.prismaClient.labours.findMany({
             where: {
-                labourStatus: "ON_BENCH",
+                assignedTo: null,
             },
             include: {
                 laboursAdditionalDocs: true,
                 LabourHistory: true,
-                members: {
+                labourAssignedTo: {
                     select: {
                         membershipId: true,
                         firmName: true,
@@ -128,3 +128,36 @@ const getAllBenchedLabours = (req, res, next) => __awaiter(void 0, void 0, void 
     }
 });
 exports.getAllBenchedLabours = getAllBenchedLabours;
+const getLabourById = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { labourId } = req.params;
+        if (![
+            "ADMIN",
+            "ADMIN_VIEWER",
+            "TSMWA_EDITOR",
+            "TSMWA_VIEWER",
+            "TQMA_EDITOR",
+            "TQMA_VIEWER",
+        ].includes(req.user.role)) {
+            return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
+        }
+        const labour = yield __1.prismaClient.labours.findUnique({
+            where: { labourId },
+            include: {
+                laboursAdditionalDocs: true,
+                LabourHistory: true,
+                labourAssignedTo: {
+                    select: {
+                        membershipId: true,
+                        firmName: true,
+                    },
+                },
+            },
+        });
+        res.status(200).json(labour);
+    }
+    catch (error) {
+        next(new bad_request_1.BadRequestsException("Failed to fetch labours", root_1.ErrorCode.SERVER_ERROR));
+    }
+});
+exports.getLabourById = getLabourById;

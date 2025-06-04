@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const error_handler_1 = require("../error-handler");
+const authenticateToken_1 = require("../middlewares/authenticateToken");
+const getAllUsers_controller_1 = require("../controllers/Users/getAllUsers.controller");
+const deleteUser_controller_1 = require("../controllers/Users/deleteUser.controller");
+const addUser_controller_1 = require("../controllers/Users/addUser.controller");
+const updateUser_controller_1 = require("../controllers/Users/updateUser.controller");
+const userRoutes = (0, express_1.Router)();
+userRoutes.get("/get_all_user", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getAllUsers_controller_1.getAllUsers));
+userRoutes.get("/get_user_id/:id", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getAllUsers_controller_1.getUserById));
+userRoutes.get("/get_inactive_user", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getAllUsers_controller_1.getInactiveUser));
+userRoutes.delete("/delete_user/:id", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(deleteUser_controller_1.deleteUser));
+userRoutes.post("/add_user", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(addUser_controller_1.addUser));
+userRoutes.post("/update_user", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(updateUser_controller_1.updateUser));
+exports.default = userRoutes;

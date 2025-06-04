@@ -45,52 +45,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifyOTP = exports.requestOTP = exports.signUp = void 0;
+exports.verifyOTP = exports.requestOTP = void 0;
 const __1 = require("../..");
 const jwt = __importStar(require("jsonwebtoken"));
 const secrets_1 = require("../../secrets");
 const bad_request_1 = require("../../exceptions/bad-request");
 const root_1 = require("../../exceptions/root");
-const users_1 = require("../../schema/users");
 const otp_service_1 = __importDefault(require("../../services/otp/otp.service"));
-const signUp = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        if (req.user.role === "ADMIN") {
-            const userDetails = users_1.SignUpSchema.parse(req.body);
-            let user = yield __1.prismaClient.user.findFirst({
-                where: { phone: userDetails.phone },
-            });
-            if (user) {
-                next(new bad_request_1.BadRequestsException("User already exists", root_1.ErrorCode.USER_ALREADY_EXISTS));
-            }
-            user = yield __1.prismaClient.user.create({
-                data: {
-                    fullName: userDetails.fullName,
-                    gender: userDetails.gender,
-                    email: userDetails.email,
-                    phone: userDetails.phone,
-                    role: userDetails.role,
-                    createdBy: req.user.userId,
-                },
-            });
-            res.json({ Message: "User create successfully", user });
-        }
-        else {
-            next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
-        }
-    }
-    catch (err) {
-        console.log(err);
-        next(
-        // new UnprocessableEntity(
-        //   err?.issues,
-        //   "Unprocessable Entity",
-        //   ErrorCode.UNPROCESSABLE_ENTITY
-        // )
-        new bad_request_1.BadRequestsException(err === null || err === void 0 ? void 0 : err.message, root_1.ErrorCode.UNPROCESSABLE_ENTITY));
-    }
-});
-exports.signUp = signUp;
 const requestOTP = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { phone } = req.body;
     try {

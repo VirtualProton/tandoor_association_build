@@ -374,40 +374,30 @@ model MemberBillingHistory {
 }
 
 model Labours {
-  id               Int          @id @default(autoincrement())
-  labourId         String       @unique @db.VarChar(225)
-  fullName         String       @db.VarChar(100)
-  fatherName       String       @db.VarChar(100)
-  dob              String       @db.VarChar(50)
-  phoneNumber      String       @unique @db.VarChar(13)
-  emailId          String?      @unique @db.VarChar(50)
-  aadharNumber     String       @unique @db.VarChar(12)
-  permanentAddress String       @db.VarChar(225)
-  presentAddress   String       @db.VarChar(225)
-  photoPath        String       @db.VarChar(225)
-  aadharPath       String?      @db.VarChar(225)
-  eShramId         String?      @unique @db.VarChar(50)
-  panNumber        String       @unique @db.VarChar(12)
-  esiNumber        String?      @db.VarChar(50)
-  // onBench           Bool         @default(FALSE)
-  labourStatus     labourStatus @default(ACTIVE)
-
-  assignedTo String? @db.VarChar(225)
-
-  // employedIn            String                  @db.VarChar(100)
-  // employedFrom          DateTime                @default(now())  
-  // signaturePath         String                  @db.VarChar(225)
-  // fingerPrint           String                  @db.VarChar(225)
-  // aadharPhotoPath       String                  @db.VarChar(225)
-  // livePhotoPath         String                  @db.VarChar(225)
-  // isActive              Bool                    @default(TRUE)
+  id                    Int                     @id @default(autoincrement())
+  labourId              String                  @unique @db.VarChar(225)
+  fullName              String                  @db.VarChar(100)
+  fatherName            String                  @db.VarChar(100)
+  dob                   String                  @db.VarChar(50)
+  phoneNumber           String                  @unique @db.VarChar(13)
+  emailId               String?                 @unique @db.VarChar(50)
+  aadharNumber          String                  @unique @db.VarChar(12)
+  permanentAddress      String                  @db.VarChar(225)
+  presentAddress        String                  @db.VarChar(225)
+  photoPath             String                  @db.VarChar(225)
+  aadharPath            String?                 @db.VarChar(225)
+  eShramId              String?                 @unique @db.VarChar(50)
+  panNumber             String                  @unique @db.VarChar(12)
+  esiNumber             String?                 @db.VarChar(50)
+  labourStatus          labourStatus            @default(ACTIVE)
+  assignedTo            String?                 @db.VarChar(225)
   createdAt             DateTime                @default(now())
   modifiedAt            DateTime                @updatedAt
   modifiedBy            Int?                    @db.Int
   modifiedByUser        User?                   @relation("Labours", fields: [modifiedBy], references: [id], onDelete: SetNull)
   laboursAdditionalDocs LaboursAdditionalDocs[] @relation("LaboursAdditionalDocs")
 
-  members          Members?                @relation("Labours", fields: [assignedTo], references: [membershipId], onDelete: Cascade)
+  labourAssignedTo          Members?                @relation("Labours", fields: [assignedTo], references: [membershipId], onDelete: Cascade)
   meetingAttendees MeetingAttendees[]      @relation("MeetingAttendees")
   LabourHistory    LabourHistory[]
   pendingChanges   LaboursPendingChanges[] @relation("LaboursPendingChanges")
@@ -434,6 +424,7 @@ model LaboursPendingChanges {
   labourId             String
   approvalStatus       ApprovalStatus @default(PENDING)
   approvedOrDeclinedBy Int?           @db.Int
+  note                 String?        @db.Text
   updatedData          Json // Store changes as JSON
   modifiedBy           Int // User ID of the person making changes
   modifiedAt           DateTime       @default(now())
@@ -601,6 +592,13 @@ model TaxInvoice {
   invoiceId     String   @unique @db.VarChar(225)
   membershipId  String   @db.VarChar(225)
   invoiceDate   DateTime
+  hsnCode       String   @db.VarChar(225)
+  particular    String   @db.Text
+  stoneCount    Int      @db.Int
+  size          Decimal  @db.Decimal(10, 2)
+  totalSqFeet   Decimal  @db.Decimal(10, 2)
+  ratePerSqFeet Decimal  @db.Decimal(10, 2)
+  amount        Decimal  @db.Decimal(10, 2)
   cGSTInPercent Int      @db.Int
   sGSTInPercent Int      @db.Int
   iGSTInPercent Int      @db.Int
@@ -615,23 +613,7 @@ model TaxInvoice {
   userModified User?    @relation("TaxInvoiceModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
   members      Members  @relation("TaxInvoice", fields: [membershipId], references: [membershipId], onDelete: Cascade)
 
-  invoiceItem               InvoiceItem[]              @relation("InvoiceItem")
   @@map("tax_invoice")
-}
-
-model InvoiceItem {
-  id            Int     @id @default(autoincrement())
-  invoiceId     String  @db.VarChar(225)
-  hsnCode       String  @db.VarChar(225)
-  particular    String  @db.Text
-  stoneCount    Int     @db.Int
-  size          Decimal @db.Decimal(10, 2)
-  totalSqFeet   Decimal @db.Decimal(10, 2)
-  ratePerSqFeet Decimal @db.Decimal(10, 2)
-  amount        Decimal @db.Decimal(10, 2)
-
-  TaxInvoice TaxInvoice @relation("InvoiceItem", fields: [invoiceId], references: [invoiceId], onDelete: Cascade)
-  @@map("invoice_item")
 }
 
 enum leaseQueryStatus {
@@ -749,5 +731,4 @@ enum ApprovalStatus {
 enum labourStatus {
   ACTIVE
   INACTIVE
-  ON_BENCH
 }
