@@ -69,5 +69,5 @@ exports.MeetingSchema = zod_1.z
     location: zod_1.z.string().max(255).optional(),
     attendees: attendees,
     status: MeetingStatusEnum.default("SCHEDULED"),
-    followUpMeeting: zod_1.z.array(followUpMeeting).optional()
+    followUpMeeting: zod_1.z.array(followUpMeeting).optional().default([])
 });

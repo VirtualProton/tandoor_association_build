@@ -13,41 +13,55 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateMeeting = void 0;
-const __1 = require("../..");
-const bad_request_1 = require("../../exceptions/bad-request");
-const root_1 = require("../../exceptions/root");
-const updateMeeting_1 = require("../../schema/meeting/updateMeeting");
 const lodash_1 = __importDefault(require("lodash"));
 const updateMeeting = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const updateMeetingDetails = updateMeeting_1.partialMeetingSchema.parse(req.body);
-    try {
-        if (!["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
-            return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
-        }
-        const result = yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
-            const existingMeeting = yield prisma.meetings.findUnique({
-                where: { id: updateMeetingDetails.id },
-            });
-            if (!existingMeeting) {
-                throw new bad_request_1.BadRequestsException("Meeting not found", root_1.ErrorCode.NOT_FOUND);
-            }
-            const changes = yield calculateFieldDifferences(existingMeeting, updateMeetingDetails);
-            if (Object.keys(changes).length === 0) {
-                throw new bad_request_1.BadRequestsException("No changes detected", root_1.ErrorCode.NO_DATA_PROVIDED);
-            }
-            const updateMeeting = yield updateMeetingHandler(prisma, changes, req.user);
-            let updateAttendees = null;
-            if (changes.attendees) {
-                // Check if the attendees have changed
-                updateAttendees = yield meetingAttendeesHandler(prisma, changes.attendees, updateMeeting.id);
-            }
-            return { updateMeeting, updateAttendees };
-        }));
-        res.status(200).json(result);
-    }
-    catch (e) {
-        return next(new bad_request_1.BadRequestsException(e.message, root_1.ErrorCode.SERVER_ERROR));
-    }
+    // const updateMeetingDetails = partialMeetingSchema.parse(req.body);
+    // try {
+    //   if (!["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
+    //     return next(
+    //       new BadRequestsException("Unauthorized", ErrorCode.UNAUTHORIZED)
+    //     );
+    //   }
+    //   const result = await prismaClient.$transaction(async (prisma) => {
+    //     const existingMeeting = await prisma.meetings.findUnique({
+    //       where: { id: updateMeetingDetails.id },
+    //     });
+    //     if (!existingMeeting) {
+    //       throw new BadRequestsException(
+    //         "Meeting not found",
+    //         ErrorCode.NOT_FOUND
+    //       );
+    //     }
+    //     const changes = await calculateFieldDifferences(
+    //       existingMeeting,
+    //       updateMeetingDetails
+    //     );
+    //     if (Object.keys(changes).length === 0) {
+    //       throw new BadRequestsException(
+    //         "No changes detected",
+    //         ErrorCode.NO_DATA_PROVIDED
+    //       );
+    //     }
+    //     const updateMeeting = await updateMeetingHandler(
+    //       prisma,
+    //       changes,
+    //       req.user
+    //     );
+    //     let updateAttendees = null;
+    //     if (changes.attendees) {
+    //       // Check if the attendees have changed
+    //        updateAttendees = await meetingAttendeesHandler(
+    //         prisma,
+    //         changes.attendees,
+    //         updateMeeting.id
+    //       );
+    //     }
+    //     return { updateMeeting, updateAttendees };
+    //   });
+    //   res.status(200).json(result);
+    // } catch (e:any) {
+    //   return next(new BadRequestsException(e.message, ErrorCode.SERVER_ERROR));
+    // }
 });
 exports.updateMeeting = updateMeeting;
 const updateMeetingHandler = (prisma, updateMeetingDetails, user) => __awaiter(void 0, void 0, void 0, function* () {

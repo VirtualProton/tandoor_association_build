@@ -14,7 +14,7 @@ const updateTrip_controller_1 = require("../controllers/trip/updateTrip.controll
 const vehicleRoutes = (0, express_1.Router)();
 vehicleRoutes.get('/get_vehicles', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getVehicleDetails_1.getAllVehiclesDetails));
 vehicleRoutes.get('/search_vehicle/:vehicleId', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getVehicleDetails_1.getVehicleByIdOrVehicleNumber));
-vehicleRoutes.get('/delete_vehicle/:vehicleId', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(deleteVehicle_controller_1.deleteVehicle));
+vehicleRoutes.delete('/delete_vehicle/:vehicleId', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(deleteVehicle_controller_1.deleteVehicle));
 vehicleRoutes.post('/add_vehicle', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(addVehicle_1.addVehicle));
 vehicleRoutes.post('/update_vehicle', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(updateVehicle_1.updateVehicle));
 vehicleRoutes.get('/get_all_trip', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getTrip_controller_1.getAllTrips));

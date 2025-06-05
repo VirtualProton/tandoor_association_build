@@ -55,6 +55,12 @@ model TripIdTracker {
   counter Int
 }
 
+model MeetIdTracker {
+  id      Int @id @default(1)
+  year    Int @unique
+  counter Int
+}
+
 //User Table
 model User {
   id        Int      @id @default(autoincrement())
@@ -397,7 +403,7 @@ model Labours {
   modifiedByUser        User?                   @relation("Labours", fields: [modifiedBy], references: [id], onDelete: SetNull)
   laboursAdditionalDocs LaboursAdditionalDocs[] @relation("LaboursAdditionalDocs")
 
-  labourAssignedTo          Members?                @relation("Labours", fields: [assignedTo], references: [membershipId], onDelete: Cascade)
+  labourAssignedTo Members?                @relation("Labours", fields: [assignedTo], references: [membershipId], onDelete: Cascade)
   meetingAttendees MeetingAttendees[]      @relation("MeetingAttendees")
   LabourHistory    LabourHistory[]
   pendingChanges   LaboursPendingChanges[] @relation("LaboursPendingChanges")
@@ -501,12 +507,13 @@ model TripRecords {
 }
 
 model Meetings {
-  id             String        @id @default(uuid())
+  id             Int           @id @default(autoincrement())
+  meetId         String        @db.VarChar(255) @unique
   title          String        @db.VarChar(255)
   agenda         String?       @db.Text
   notes          String?       @db.Text
   startTime      DateTime
-  endTime        DateTime
+  // endTime        DateTime
   location       String?       @db.VarChar(255)
   status         MeetingStatus @default(SCHEDULED)
   createdBy      Int           @db.Int
@@ -525,17 +532,17 @@ model Meetings {
 
 model FollowUpMeeting {
   id        String   @id @default(uuid())
-  meetingId String   @db.VarChar(36)
+  meetId String   @db.VarChar(36)
   dateTime  DateTime
   createdAt DateTime @default(now())
-  meeting   Meetings @relation("FollowUpMeetings", fields: [meetingId], references: [id], onDelete: Cascade)
+  meeting   Meetings @relation("FollowUpMeetings", fields: [meetId], references: [meetId], onDelete: Cascade)
 
   @@map("follow_up_meetings")
 }
 
 model MeetingAttendees {
   id           Int          @id @default(autoincrement())
-  meetingId    String       @db.VarChar(225)
+  meetId    String       @db.VarChar(225)
   membershipId String?      @db.VarChar(225) // Reference to Members
   vehicleId    String?      @db.VarChar(225) // Reference to Vehicles
   vehicleRole  VehicleRole? // NEW: specifies whether vehicle is owner or driver
@@ -543,12 +550,12 @@ model MeetingAttendees {
   isCustom     Bool         @default(FALSE) // True if manually added
   createdAt    DateTime     @default(now())
 
-  meeting Meetings  @relation("MeetingAttendees", fields: [meetingId], references: [id], onDelete: Cascade)
+  meeting Meetings  @relation("MeetingAttendees", fields: [meetId], references: [meetId], onDelete: Cascade)
   member  Members?  @relation("MeetingAttendees", fields: [membershipId], references: [membershipId], onDelete: Cascade)
   vehicle Vehicles? @relation("MeetingAttendees", fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
   labour  Labours?  @relation("MeetingAttendees", fields: [labourId], references: [labourId], onDelete: Cascade)
 
-  @@unique([meetingId, membershipId, vehicleId]) // Ensures a unique entry per meeting
+  @@unique([meetId, membershipId, vehicleId]) // Ensures a unique entry per meeting
   @@map("meeting_attendees")
 }
 
