@@ -9,6 +9,9 @@ const deleteBill_controller_1 = require("../controllers/Bill/deleteBill.controll
 const updateBill_controller_1 = require("../controllers/Bill/updateBill.controller");
 const billRoutes = (0, express_1.Router)();
 billRoutes.get('/get_bill/:paymentStatus', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getBill_controller_1.getBill));
+billRoutes.get('/getBillById/:billingId', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getBill_controller_1.getBillById));
+billRoutes.get('/filterBills/:billingId/:membershipId/:paymentStatus', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getBill_controller_1.getFilteredBills));
+billRoutes.get('/get_bill_summary', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getBill_controller_1.getBillSummary));
 billRoutes.delete('/delete_bill/:billingId', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(deleteBill_controller_1.deleteBill));
 billRoutes.post('/add_bill', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(generateBill_controller_1.generateBill));
 billRoutes.post('/update_bill', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(updateBill_controller_1.updateBill));

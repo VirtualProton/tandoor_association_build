@@ -58,10 +58,10 @@ const requestOTP = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         let user = yield __1.prismaClient.user.findFirst({ where: { phone } });
         const identifier = phone;
         if (!identifier) {
-            next(new bad_request_1.BadRequestsException("Invalid Number", root_1.ErrorCode.INVALID_INPUT));
+            return next(new bad_request_1.BadRequestsException("Invalid Number", root_1.ErrorCode.INVALID_INPUT));
         }
         if (!user) {
-            next(new bad_request_1.BadRequestsException("User not registered", root_1.ErrorCode.USER_NOT_FOUND));
+            return next(new bad_request_1.BadRequestsException("User not registered", root_1.ErrorCode.USER_NOT_FOUND));
         }
         // const otp = otpService.generateOTP();
         // otpService.storeOTP(identifier, otp);
@@ -74,6 +74,7 @@ const requestOTP = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         return res.status(200).json({ message: "OTP sent successfully", otp });
     }
     catch (err) {
+        console.log(err);
         next(new bad_request_1.BadRequestsException("Failed to send OTP", root_1.ErrorCode.OTP_GENERATION_FAILED));
     }
 });
