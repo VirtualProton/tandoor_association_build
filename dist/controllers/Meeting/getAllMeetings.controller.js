@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMeetingById = exports.getAllMeetings = void 0;
+exports.upcomingMeetings = exports.getMeetingById = exports.getAllMeetings = void 0;
 const bad_request_1 = require("../../exceptions/bad-request");
 const root_1 = require("../../exceptions/root");
 const __1 = require("../..");
@@ -60,3 +60,67 @@ const getMeetingById = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.getMeetingById = getMeetingById;
+const upcomingMeetings = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!["ADMIN",
+            "ADMIN_VIEWER",
+            "TSMWA_EDITOR",
+            "TSMWA_VIEWER",
+            "TQMA_EDITOR",
+            "TQMA_VIEWER"].includes(req.user.role)) {
+            return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
+        }
+        const now = new Date();
+        const sevenDaysLater = new Date();
+        sevenDaysLater.setDate(now.getDate() + 7);
+        // 1. Get Meetings directly scheduled within the next 7 days
+        const primaryMeetings = yield __1.prismaClient.meetings.findMany({
+            where: {
+                startTime: {
+                    gte: now,
+                    lte: sevenDaysLater,
+                },
+            },
+            include: {
+                followUpMeetings: true,
+            },
+        });
+        // 2. Get FollowUpMeetings within the next 7 days
+        const followUpMeetings = yield __1.prismaClient.followUpMeeting.findMany({
+            where: {
+                dateTime: {
+                    gte: now,
+                    lte: sevenDaysLater,
+                },
+            },
+            include: {
+                meeting: true,
+            },
+        });
+        // 3. Normalize both sets to a common structure
+        const mainMeetingEvents = primaryMeetings.map(m => ({
+            type: 'MAIN',
+            meetingId: m.meetId,
+            title: m.title,
+            agenda: m.agenda,
+            time: m.startTime,
+            source: m,
+        }));
+        const followUpMeetingEvents = followUpMeetings.map(f => ({
+            type: 'FOLLOW_UP',
+            meetingId: f.meeting.meetId,
+            title: f.meeting.title,
+            agenda: f.meeting.agenda,
+            time: f.dateTime,
+            source: f,
+        }));
+        // 4. Merge and sort by time
+        const upcomingMeetings = [...mainMeetingEvents, ...followUpMeetingEvents].sort((a, b) => a.time.getTime() - b.time.getTime());
+        res.status(200).json({ message: "Upcoming meetings retrieved successfully", data: upcomingMeetings });
+    }
+    catch (error) {
+        console.error("Error in upcomingMeetings:", error);
+        return next(new bad_request_1.BadRequestsException(error.message, root_1.ErrorCode.BAD_REQUEST));
+    }
+});
+exports.upcomingMeetings = upcomingMeetings;

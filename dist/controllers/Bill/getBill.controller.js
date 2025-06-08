@@ -120,7 +120,7 @@ const getBillSummary = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
         });
         const totalAmount = totalAmountResult._sum.totalAmount || 0;
         const totalRecords = yield __1.prismaClient.memberBillingHistory.count();
-        const [totalPaidAmountResult, totalPaidCount] = yield Promise.all([
+        const [totalPaidAmountResult, totalPaidCount, totalPartialPaidCount] = yield Promise.all([
             __1.prismaClient.memberBillingHistory.aggregate({
                 _sum: {
                     paidAmount: true
@@ -134,7 +134,14 @@ const getBillSummary = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
             __1.prismaClient.memberBillingHistory.count({
                 where: {
                     paymentStatus: {
-                        in: ["PAID", "PARTIAL"]
+                        in: ["PAID"]
+                    }
+                }
+            }),
+            __1.prismaClient.memberBillingHistory.count({
+                where: {
+                    paymentStatus: {
+                        in: ["PARTIAL"]
                     }
                 }
             })
@@ -160,15 +167,19 @@ const getBillSummary = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
             })
         ]);
         const totalDueAmount = totalDueAmountResult._sum.dueAmount || 0;
+        const collectionRate = (Number(totalPaidAmount) / Number(totalAmount)) * 100 || 0;
         return res.status(200).json({
             message: "Bill summary fetched successfully",
             data: {
                 totalRecords,
                 totalAmount,
                 totalPaidCount,
+                totalPartialPaidCount,
                 totalPaidAmount,
                 totalDueCount,
+                totalPartialDueCount: totalPartialPaidCount,
                 totalDueAmount,
+                collectionRate: collectionRate.toFixed(2) + "%"
             }
         });
     }

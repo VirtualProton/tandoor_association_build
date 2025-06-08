@@ -30,6 +30,25 @@ const getOverView = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
         const activeLabour = yield __1.prismaClient.labours.count({ where: { labourStatus: "ACTIVE" } });
         const onBenchLabour = yield __1.prismaClient.labours.count({ where: { assignedTo: null } });
         const inactiveLabour = yield __1.prismaClient.labours.count({ where: { labourStatus: "INACTIVE" } });
+        const membershipFeesDue = yield __1.prismaClient.memberBillingHistory.findMany({
+            where: {
+                paymentStatus: {
+                    in: ["DUE", "PARTIAL"]
+                }
+            },
+            orderBy: {
+                fromDate: "asc"
+            },
+            include: {
+                members: {
+                    select: {
+                        membershipId: true,
+                        firmName: true,
+                        applicantName: true
+                    }
+                }
+            }
+        });
         res.json({
             members: {
                 total: totalMembers,
@@ -49,6 +68,7 @@ const getOverView = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
                 onBench: onBenchLabour,
                 inactive: inactiveLabour,
             },
+            membershipFeesDue
         });
     }
     catch (err) {

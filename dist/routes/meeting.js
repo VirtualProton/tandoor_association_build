@@ -10,6 +10,7 @@ const deleteMeeting_controller_1 = require("../controllers/Meeting/deleteMeeting
 const meetingRoutes = (0, express_1.Router)();
 meetingRoutes.get('/get_all_meet', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getAllMeetings_controller_1.getAllMeetings));
 meetingRoutes.get('/get_meet_id/:meetId', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getAllMeetings_controller_1.getMeetingById));
+meetingRoutes.get('/upcoming_meet', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getAllMeetings_controller_1.upcomingMeetings));
 meetingRoutes.delete('/delete_meet/:meetId', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(deleteMeeting_controller_1.deleteMeeting));
 meetingRoutes.post('/schedule_meeting', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(scheduleMeeting_1.scheduleMeeting));
 meetingRoutes.post('/update_meeting', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(modifyMeeting_1.updateMeeting));
