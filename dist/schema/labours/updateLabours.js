@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LabourPartialUpdateSchema = exports.LabourUpdateSchema = void 0;
 const zod_1 = require("zod");
 // Define the enum used in labourStatus
-const labourStatusEnum = zod_1.z.enum(["ACTIVE", "INACTIVE"]);
+const labourStatusEnum = zod_1.z.enum(["ACTIVE", "INACTIVE", "ON_BENCH"]);
 const labourAdditionalDoc = zod_1.z.object({
     id: zod_1.z.number().int().optional(),
     docName: zod_1.z.string().max(100),
@@ -46,4 +46,27 @@ exports.LabourPartialUpdateSchema = exports.LabourUpdateSchema.partial()
 })
     .refine((data) => Object.keys(data).length > 1, {
     message: "At least one field (besides labourId) must be provided for update."
+}).transform((data) => {
+    if (data.assignedTo && !data.labourStatus) {
+        data.labourStatus = "ACTIVE";
+    }
+    else if (!data.assignedTo && (data.labourStatus === "INACTIVE" || data.labourStatus === "ON_BENCH")) {
+        data.assignedTo = null;
+    }
+    return data;
+}).superRefine((data, ctx) => {
+    if ((data.labourStatus === "INACTIVE" || data.labourStatus === "ON_BENCH") && data.assignedTo) {
+        ctx.addIssue({
+            path: ["assignedTo"],
+            code: zod_1.z.ZodIssueCode.custom,
+            message: `'assignedTo' must be null when labourStatus is '${data.labourStatus}'`,
+        });
+    }
+    else if (data.labourStatus === "ACTIVE" && !data.assignedTo) {
+        ctx.addIssue({
+            path: ["assignedTo"],
+            code: zod_1.z.ZodIssueCode.custom,
+            message: `'assignedTo' cannot be null when labourStatus is '${data.labourStatus}'`,
+        });
+    }
 });

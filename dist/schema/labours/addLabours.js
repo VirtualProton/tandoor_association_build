@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LabourSchema = void 0;
 const zod_1 = require("zod");
 // Define the enum used in labourStatus
-const labourStatusEnum = zod_1.z.enum(["ACTIVE", "INACTIVE"]);
+const labourStatusEnum = zod_1.z.enum(["ACTIVE", "INACTIVE", "ON_BENCH"]);
 const labourAdditionalDoc = zod_1.z.object({
     docName: zod_1.z.string().max(100),
     docFilePath: zod_1.z.string().max(225),
@@ -29,6 +29,8 @@ exports.LabourSchema = zod_1.z
     esiNumber: zod_1.z.string().max(50).optional().nullable(),
     eShramId: zod_1.z.string().max(50).optional().nullable(),
     labourStatus: labourStatusEnum.default("ACTIVE"),
-    assignedTo: zod_1.z.string().max(225).optional().nullable(),
+    assignedTo: zod_1.z.string().max(225).nullable().default(null),
     additionalDocs: zod_1.z.array(labourAdditionalDoc).default([]),
+}).transform((data) => {
+    return Object.assign(Object.assign({}, data), { labourStatus: data.assignedTo ? "ACTIVE" : (data.labourStatus && data.labourStatus === "INACTIVE") ? data.labourStatus : "ON_BENCH" });
 });

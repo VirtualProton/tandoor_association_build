@@ -443,14 +443,14 @@ model LaboursPendingChanges {
 }
 
 model LabourHistory {
-  Id                Int       @id @default(autoincrement())
-  labourId          String    @db.VarChar(225)
-  assignedTo        String?   @db.VarChar(225)
-  onBench           Bool      @default(TRUE)
-  reasonForTransfer String?   @db.VarChar(225)
-  fromDate          DateTime  @default(now())
+  Id                Int          @id @default(autoincrement())
+  labourId          String       @db.VarChar(225)
+  assignedTo        String?      @db.VarChar(225)
+  labourStatus      labourStatus
+  reasonForTransfer String?      @db.VarChar(225)
+  fromDate          DateTime     @default(now())
   toDate            DateTime?
-  createdAt         DateTime  @default(now())
+  createdAt         DateTime     @default(now())
 
   labours Labours  @relation(fields: [labourId], references: [labourId], onDelete: Cascade)
   members Members? @relation("LabourHistory", fields: [assignedTo], references: [membershipId], onDelete: Cascade)
@@ -508,7 +508,7 @@ model TripRecords {
 
 model Meetings {
   id             Int           @id @default(autoincrement())
-  meetId         String        @db.VarChar(255) @unique
+  meetId         String        @unique @db.VarChar(255)
   title          String        @db.VarChar(255)
   agenda         String?       @db.Text
   notes          String?       @db.Text
@@ -532,7 +532,7 @@ model Meetings {
 
 model FollowUpMeeting {
   id        String   @id @default(uuid())
-  meetId String   @db.VarChar(36)
+  meetId    String   @db.VarChar(36)
   dateTime  DateTime
   createdAt DateTime @default(now())
   meeting   Meetings @relation("FollowUpMeetings", fields: [meetId], references: [meetId], onDelete: Cascade)
@@ -542,7 +542,7 @@ model FollowUpMeeting {
 
 model MeetingAttendees {
   id           Int          @id @default(autoincrement())
-  meetId    String       @db.VarChar(225)
+  meetId       String       @db.VarChar(225)
   membershipId String?      @db.VarChar(225) // Reference to Members
   vehicleId    String?      @db.VarChar(225) // Reference to Vehicles
   vehicleRole  VehicleRole? // NEW: specifies whether vehicle is owner or driver
@@ -738,4 +738,5 @@ enum ApprovalStatus {
 enum labourStatus {
   ACTIVE
   INACTIVE
+  ON_BENCH
 }

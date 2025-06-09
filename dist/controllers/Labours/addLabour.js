@@ -71,7 +71,7 @@ const createInitialLabourHistory = (prisma, labour) => __awaiter(void 0, void 0,
         data: {
             labourId: labour.labourId,
             assignedTo: assignedTo,
-            onBench: assignedTo ? "FALSE" : "TRUE",
+            labourStatus: labour.labourStatus,
             reasonForTransfer: "Initial assign",
         },
     });

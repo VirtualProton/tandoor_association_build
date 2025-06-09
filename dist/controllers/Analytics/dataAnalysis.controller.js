@@ -125,6 +125,38 @@ const vehicleStats = (startDate, endDate) => __awaiter(void 0, void 0, void 0, f
         monthlyStats: result
     };
 });
+const labourStats = (startDate, endDate) => __awaiter(void 0, void 0, void 0, function* () {
+    // Count active labours (status: 'ACTIVE')
+    const activeLaboursCount = yield __1.prismaClient.labours.count({
+        where: {
+            labourStatus: 'ACTIVE',
+        },
+    });
+    // Count inactive labours (status: 'INACTIVE')
+    const inactiveLaboursCount = yield __1.prismaClient.labours.count({
+        where: {
+            labourStatus: 'INACTIVE',
+        },
+    });
+    // Count labours on bench (assignedTo is null)
+    const onBenchLaboursCount = yield __1.prismaClient.labours.count({
+        where: {
+            assignedTo: null,
+        },
+    });
+    const labourHistoryByMonth = yield __1.prismaClient.$queryRaw `
+        SELECT fromDate (date, '%Y-%m') AS month_year, COUNT(id) AS count
+        FROM LabourHistory
+        WHERE fromDate BETWEEN ${startDate} AND ${endDate}
+        GROUP BY month_year
+        ORDER BY month_year;
+    `;
+    return {
+        activeLaboursCount,
+        inactiveLaboursCount,
+        onBenchLaboursCount,
+    };
+});
 const getDataAnalysis = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const parseResult = dateSchema.safeParse(req.body);

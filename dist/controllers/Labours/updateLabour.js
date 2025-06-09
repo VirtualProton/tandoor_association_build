@@ -47,7 +47,7 @@ const updateLabour = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
             return res.status(200).json({ message: `Labour ${partialUpdateData.labourId} updated data submitted for approval` });
         }
         yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
-            const { labourId, deleteAdditionalDocs, newAdditionalDocs, updateAdditionalDocs, reasonForTransfer, labourStatus, assignedTo } = partialUpdateData, remainingData = __rest(partialUpdateData, ["labourId", "deleteAdditionalDocs", "newAdditionalDocs", "updateAdditionalDocs", "reasonForTransfer", "labourStatus", "assignedTo"]);
+            const { labourId, deleteAdditionalDocs, newAdditionalDocs, updateAdditionalDocs, reasonForTransfer } = partialUpdateData, remainingData = __rest(partialUpdateData, ["labourId", "deleteAdditionalDocs", "newAdditionalDocs", "updateAdditionalDocs", "reasonForTransfer"]);
             if (deleteAdditionalDocs && deleteAdditionalDocs.length > 0) {
                 yield prisma.laboursAdditionalDocs.deleteMany({
                     where: {
@@ -76,46 +76,49 @@ const updateLabour = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
             const labour = yield prisma.labours.findUnique({
                 where: { labourId: partialUpdateData.labourId },
                 select: {
-                    assignedTo: true
+                    assignedTo: true,
+                    labourStatus: true
                 }
             });
             console.log(remainingData);
             yield prisma.labours.update({
                 where: { labourId },
-                data: Object.assign(Object.assign({}, remainingData), { labourStatus, assignedTo: labourStatus === "ACTIVE" ? assignedTo : null, modifiedBy: req.user.userId })
+                data: Object.assign(Object.assign({}, remainingData), { modifiedBy: req.user.userId })
             });
-            if (labour && (assignedTo || assignedTo == null) && partialUpdateData.assignedTo !== labour.assignedTo && labourStatus !== "INACTIVE") {
-                yield prisma.labourHistory.updateMany({
-                    where: {
-                        labourId: partialUpdateData.labourId,
-                        toDate: null
-                    },
-                    data: {
-                        toDate: new Date()
-                    }
-                });
-                yield prisma.labourHistory.create({
-                    data: {
-                        labourId: partialUpdateData.labourId,
-                        assignedTo: assignedTo !== null && assignedTo !== void 0 ? assignedTo : null,
-                        onBench: assignedTo ? "FALSE" : "TRUE",
-                        reasonForTransfer: reasonForTransfer
-                    }
-                });
+            if (partialUpdateData.labourStatus) {
+                if (labour && (labour.assignedTo !== partialUpdateData.assignedTo || labour && labour.labourStatus !== partialUpdateData.labourStatus)) {
+                    yield prisma.labourHistory.updateMany({
+                        where: {
+                            labourId: partialUpdateData.labourId,
+                            toDate: null
+                        },
+                        data: {
+                            toDate: new Date()
+                        }
+                    });
+                    yield prisma.labourHistory.create({
+                        data: {
+                            labourId: partialUpdateData.labourId,
+                            assignedTo: partialUpdateData.assignedTo || null,
+                            labourStatus: partialUpdateData.labourStatus,
+                            reasonForTransfer: reasonForTransfer
+                        }
+                    });
+                }
+                else {
+                    yield prisma.labourHistory.updateMany({
+                        where: {
+                            labourId: partialUpdateData.labourId,
+                            toDate: null
+                        },
+                        data: {
+                            toDate: new Date()
+                        }
+                    });
+                }
             }
-            else {
-                yield prisma.labourHistory.updateMany({
-                    where: {
-                        labourId: partialUpdateData.labourId,
-                        toDate: null
-                    },
-                    data: {
-                        toDate: new Date()
-                    }
-                });
-            }
+            return res.status(200).json({ message: `Labour ${partialUpdateData.labourId} updated successfully` });
         }));
-        return res.status(200).json({ message: `Labour ${partialUpdateData.labourId} updated successfully` });
     }
     catch (error) {
         console.error("Error in updateLabour:", error);
