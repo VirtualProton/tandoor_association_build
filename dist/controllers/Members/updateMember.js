@@ -34,6 +34,7 @@ const updateMember = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
     var _a;
     try {
         const memberUpdatedData = UpdateMember_1.MemberUpdateSchema.parse(req.body);
+        const { partnerDetails, machineryInformations, branchDetails, attachments, complianceDetails, similarMembershipInquiry, proposer, executiveProposer, declarations, membershipId } = memberUpdatedData, memberData = __rest(memberUpdatedData, ["partnerDetails", "machineryInformations", "branchDetails", "attachments", "complianceDetails", "similarMembershipInquiry", "proposer", "executiveProposer", "declarations", "membershipId"]);
         if (EDITOR_ROLES.has(req.user.role)) {
             yield __1.prismaClient.membersPendingChanges.create({
                 data: {
@@ -45,7 +46,6 @@ const updateMember = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
             res.status(200).json({ data: memberUpdatedData, message: "Member data update request has been submitted for approval." });
         }
         else if (req.user.role === "ADMIN") {
-            const { partnerDetails, machineryInformations, branchDetails, attachments, complianceDetails, similarMembershipInquiry, proposer, executiveProposer, declarations, membershipId } = memberUpdatedData, memberData = __rest(memberUpdatedData, ["partnerDetails", "machineryInformations", "branchDetails", "attachments", "complianceDetails", "similarMembershipInquiry", "proposer", "executiveProposer", "declarations", "membershipId"]);
             yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
                 if (partnerDetails) {
                     yield updatePartnerDetails(prisma, membershipId, partnerDetails);
@@ -113,6 +113,9 @@ const updateMember = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
             );
             res.status(200).json({ data: memberUpdatedData, message: `Member ${membershipId} data updated successfully.` });
         }
+        else {
+            return next(new bad_request_1.BadRequestsException("Unauthorized to update member data.", root_1.ErrorCode.UNAUTHORIZED));
+        }
     }
     catch (error) {
         console.error("Error in updateMember:", error.code, error.message);
@@ -140,7 +143,8 @@ const updatePartnerDetails = (prisma, membershipId, PartnerDetails) => __awaiter
         const partnerDetailsToAdd = PartnerDetails.newPartnerDetails.map((partner) => (Object.assign({ membershipId }, partner)));
         console.log("Adding partner details:", partnerDetailsToAdd);
         yield prisma.partnerDetails.createMany({
-            data: partnerDetailsToAdd
+            data: partnerDetailsToAdd,
+            skipDuplicates: true // This will skip duplicate entries based on unique constraints
         });
     }
     if (PartnerDetails.updatePartnerDetails && PartnerDetails.updatePartnerDetails.length > 0) {
@@ -168,7 +172,8 @@ const updateMachineryInformations = (prisma, membershipId, machineryInformations
     if (machineryInformations.newMachineryInformations && machineryInformations.newMachineryInformations.length > 0) {
         const machineryToAdd = machineryInformations.newMachineryInformations.map((machinery) => (Object.assign({ membershipId }, machinery)));
         yield prisma.machineryInformations.createMany({
-            data: machineryToAdd
+            data: machineryToAdd,
+            skipDuplicates: true // This will skip duplicate entries based on unique constraints
         });
     }
     if (machineryInformations.updateMachineryInformations && machineryInformations.updateMachineryInformations.length > 0) {
@@ -201,7 +206,8 @@ const updateBranchDetails = (prisma, membershipId, branchDetails) => __awaiter(v
             if (machineryInformations && machineryInformations.length > 0) {
                 const machineryToAdd = machineryInformations.map((machinery) => (Object.assign(Object.assign({}, machinery), { branchId: newBranch.id })));
                 yield prisma.machineryInformations.createMany({
-                    data: machineryToAdd
+                    data: machineryToAdd,
+                    skipDuplicates: true
                 });
             }
         }
@@ -222,7 +228,8 @@ const updateBranchDetails = (prisma, membershipId, branchDetails) => __awaiter(v
             if (newMachineryInformations && newMachineryInformations.length > 0) {
                 const machineryToAdd = newMachineryInformations.map((machinery) => (Object.assign(Object.assign({}, machinery), { branchId: branch.id })));
                 yield prisma.machineryInformations.createMany({
-                    data: machineryToAdd
+                    data: machineryToAdd,
+                    skipDuplicates: true
                 });
             }
             if (updateMachineryInformations && updateMachineryInformations.length > 0) {
@@ -261,7 +268,8 @@ const updateAttachments = (prisma, membershipId, attachments) => __awaiter(void 
     if (newAttachments && newAttachments.length > 0) {
         const attachmentsToAdd = newAttachments.map((attachment) => (Object.assign({ membershipId }, attachment)));
         yield prisma.attachments.createMany({
-            data: attachmentsToAdd
+            data: attachmentsToAdd,
+            skipDuplicates: true // This will skip duplicate entries based on unique constraints
         });
     }
     if (updateAttachments && updateAttachments.length > 0) {
