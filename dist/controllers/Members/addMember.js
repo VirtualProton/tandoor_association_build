@@ -397,6 +397,7 @@ const addAttachmentsHandler = (prisma, membershipId, attachments) => __awaiter(v
                 membershipId,
                 documentName: attachment.documentName,
                 documentPath: attachment.documentPath,
+                expiredAt: attachment.expiredAt ? new Date(attachment.expiredAt) : null,
             },
         });
     })));

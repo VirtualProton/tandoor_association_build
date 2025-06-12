@@ -10,8 +10,6 @@ const labourAdditionalDoc = zod_1.z.object({
 });
 exports.LabourSchema = zod_1.z
     .object({
-    fullName: zod_1.z.string().max(100),
-    fatherName: zod_1.z.string().max(100),
     dob: zod_1.z
         .string()
         .max(50)

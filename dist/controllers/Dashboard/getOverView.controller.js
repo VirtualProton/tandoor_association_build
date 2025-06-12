@@ -49,6 +49,29 @@ const getOverView = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
                 }
             }
         });
+        const expiringLisences = yield __1.prismaClient.attachments.findMany({
+            where: {
+                expiredAt: {
+                    lte: new Date(new Date().setDate(new Date().getDate() + 30)) // 30 days from now
+                },
+            },
+            select: {
+                id: true,
+                documentName: true,
+                documentPath: true,
+                expiredAt: true,
+                members: {
+                    select: {
+                        membershipId: true,
+                        firmName: true,
+                        applicantName: true
+                    }
+                }
+            },
+            orderBy: {
+                expiredAt: "asc"
+            }
+        });
         res.json({
             members: {
                 total: totalMembers,
@@ -68,7 +91,8 @@ const getOverView = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
                 onBench: onBenchLabour,
                 inactive: inactiveLabour,
             },
-            membershipFeesDue
+            membershipFeesDue,
+            expiringLisences
         });
     }
     catch (err) {

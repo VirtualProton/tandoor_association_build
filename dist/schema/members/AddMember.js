@@ -40,14 +40,19 @@ const BranchSchema = zod_1.z.object({
 const ComplianceDetails = zod_1.z.object({
     gstInNumber: zod_1.z.string().max(50),
     gstInCertificatePath: zod_1.z.string().max(225),
+    gstExpiredAt: zod_1.z.coerce.date().optional(),
     factoryLicenseNumber: zod_1.z.string().max(50),
     factoryLicensePath: zod_1.z.string().max(225),
+    factoryLicenseExpiredAt: zod_1.z.coerce.date().optional(),
     tspcbOrderNumber: zod_1.z.string().max(50),
     tspcbCertificatePath: zod_1.z.string().max(225),
+    tspcbExpiredAt: zod_1.z.coerce.date().optional(),
     mdlNumber: zod_1.z.string().max(50),
     mdlCertificatePath: zod_1.z.string().max(225),
+    mdlExpiredAt: zod_1.z.coerce.date().optional(),
     udyamCertificateNumber: zod_1.z.string().max(50),
     udyamCertificatePath: zod_1.z.string().max(225),
+    udyamCertificateExpiredAt: zod_1.z.coerce.date().optional(),
     fullAddress: zod_1.z.string().max(225),
     partnerName: zod_1.z.string().max(50),
     contactNumber: zod_1.z.string().max(13),
@@ -65,6 +70,7 @@ const SimilarMembershipInquiry = zod_1.z.object({
 const Attachments = zod_1.z.object({
     documentName: zod_1.z.string().max(50),
     documentPath: zod_1.z.string().max(225),
+    expiredAt: zod_1.z.coerce.date().optional(),
 });
 const Declarations = zod_1.z.object({
     agreesToTerms: Bool.default("FALSE"),

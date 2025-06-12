@@ -1,6 +1,8 @@
 /*
   Warnings:
 
+  - You are about to alter the column `fromDate` on the `LeaseQueryHistory` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
+  - You are about to alter the column `toDate` on the `LeaseQueryHistory` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
   - You are about to alter the column `dateOfLease` on the `lease_queries` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
   - You are about to alter the column `expiryOfLease` on the `lease_queries` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
   - You are about to alter the column `dateOfRenewal` on the `lease_queries` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
@@ -9,6 +11,10 @@
   - You are about to alter the column `tripDate` on the `trip_record` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
 
 */
+-- AlterTable
+ALTER TABLE `LeaseQueryHistory` MODIFY `fromDate` DATETIME NOT NULL,
+    MODIFY `toDate` DATETIME NOT NULL;
+
 -- AlterTable
 ALTER TABLE `lease_queries` MODIFY `dateOfLease` DATETIME NOT NULL,
     MODIFY `expiryOfLease` DATETIME NOT NULL,

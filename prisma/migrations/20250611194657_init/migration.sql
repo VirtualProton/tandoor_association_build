@@ -1,0 +1,44 @@
+/*
+  Warnings:
+
+  - You are about to alter the column `fromDate` on the `LeaseQueryHistory` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
+  - You are about to alter the column `toDate` on the `LeaseQueryHistory` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
+  - You are about to alter the column `expiredAt` on the `attachments` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
+  - You are about to alter the column `factoryLicenseExpiredAt` on the `compliance_details` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
+  - You are about to alter the column `gstExpiredAt` on the `compliance_details` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
+  - You are about to alter the column `mdlExpiredAt` on the `compliance_details` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
+  - You are about to alter the column `tspcbExpiredAt` on the `compliance_details` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
+  - You are about to alter the column `udyamCertificateExpiredAt` on the `compliance_details` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
+  - You are about to alter the column `dateOfLease` on the `lease_queries` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
+  - You are about to alter the column `expiryOfLease` on the `lease_queries` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
+  - You are about to alter the column `dateOfRenewal` on the `lease_queries` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
+  - You are about to alter the column `fromDate` on the `member_billing_history` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
+  - You are about to alter the column `toDate` on the `member_billing_history` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
+  - You are about to alter the column `tripDate` on the `trip_record` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
+
+*/
+-- AlterTable
+ALTER TABLE `LeaseQueryHistory` MODIFY `fromDate` DATETIME NOT NULL,
+    MODIFY `toDate` DATETIME NOT NULL;
+
+-- AlterTable
+ALTER TABLE `attachments` MODIFY `expiredAt` DATETIME NULL;
+
+-- AlterTable
+ALTER TABLE `compliance_details` MODIFY `factoryLicenseExpiredAt` DATETIME NULL,
+    MODIFY `gstExpiredAt` DATETIME NULL,
+    MODIFY `mdlExpiredAt` DATETIME NULL,
+    MODIFY `tspcbExpiredAt` DATETIME NULL,
+    MODIFY `udyamCertificateExpiredAt` DATETIME NULL;
+
+-- AlterTable
+ALTER TABLE `lease_queries` MODIFY `dateOfLease` DATETIME NOT NULL,
+    MODIFY `expiryOfLease` DATETIME NOT NULL,
+    MODIFY `dateOfRenewal` DATETIME NULL;
+
+-- AlterTable
+ALTER TABLE `member_billing_history` MODIFY `fromDate` DATETIME NOT NULL,
+    MODIFY `toDate` DATETIME NOT NULL;
+
+-- AlterTable
+ALTER TABLE `trip_record` MODIFY `tripDate` DATETIME NOT NULL;

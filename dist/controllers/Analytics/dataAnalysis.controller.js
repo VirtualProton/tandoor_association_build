@@ -126,6 +126,7 @@ const vehicleStats = (startDate, endDate) => __awaiter(void 0, void 0, void 0, f
     };
 });
 const labourStats = (startDate, endDate) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     // Count active labours (status: 'ACTIVE')
     const activeLaboursCount = yield __1.prismaClient.labours.count({
         where: {
@@ -144,18 +145,84 @@ const labourStats = (startDate, endDate) => __awaiter(void 0, void 0, void 0, fu
             assignedTo: null,
         },
     });
-    const labourHistoryByMonth = yield __1.prismaClient.$queryRaw `
-        SELECT fromDate (date, '%Y-%m') AS month_year, COUNT(id) AS count
-        FROM LabourHistory
-        WHERE fromDate BETWEEN ${startDate} AND ${endDate}
-        GROUP BY month_year
-        ORDER BY month_year;
-    `;
+    const historyData = yield __1.prismaClient.labourHistory.findMany({
+        where: {
+            AND: [
+                { fromDate: { lte: endDate } },
+                {
+                    OR: [
+                        { toDate: null },
+                        { toDate: { gte: startDate } },
+                    ]
+                }
+            ]
+        },
+        select: {
+            labourStatus: true,
+            fromDate: true,
+            toDate: true,
+        }
+    });
+    const monthlyStatusMap = {};
+    for (const record of historyData) {
+        const { fromDate, toDate, labourStatus } = record;
+        // Clamp start and end to user-specified range
+        let current = new Date(Math.max(startDate.getTime(), new Date(fromDate).getTime()));
+        const end = new Date(Math.min(endDate.getTime(), toDate ? new Date(toDate).getTime() : endDate.getTime()));
+        // Normalize current to start of month
+        current = new Date(current.getFullYear(), current.getMonth(), 1);
+        while (current <= end) {
+            const key = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+            if (!monthlyStatusMap[key]) {
+                monthlyStatusMap[key] = { ACTIVE: 0, INACTIVE: 0, ON_BENCH: 0 };
+            }
+            monthlyStatusMap[key][labourStatus] += 1;
+            // Move to first of next month
+            current.setMonth(current.getMonth() + 1);
+        }
+    }
+    const historyDataBasedOnMember = yield __1.prismaClient.labourHistory.findMany({
+        where: {
+            AND: [
+                { fromDate: { lte: endDate } },
+                {
+                    OR: [
+                        { toDate: null },
+                        { toDate: { gte: startDate } },
+                    ]
+                },
+                { assignedTo: { not: null } }
+            ]
+        },
+        select: {
+            assignedTo: true,
+            labourStatus: true,
+            fromDate: true,
+            toDate: true,
+            members: {
+                select: {
+                    firmName: true, // Assuming this is how you label members
+                }
+            }
+        }
+    });
+    const memberCounts = {};
+    for (const record of historyDataBasedOnMember) {
+        const name = ((_a = record.members) === null || _a === void 0 ? void 0 : _a.firmName) || record.assignedTo || "Unassigned";
+        if (!memberCounts[name]) {
+            memberCounts[name] = 0;
+        }
+        memberCounts[name] += 1;
+    }
     return {
         activeLaboursCount,
         inactiveLaboursCount,
         onBenchLaboursCount,
+        monthlyStatusMap,
+        memberCounts
     };
+});
+const conplianceStats = (startDate, endDate) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const getDataAnalysis = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -247,6 +314,7 @@ const getDataAnalysis = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
             totalDueAmount,
             members: yield getMemberStat(startDate, endDate),
             vehicles: yield vehicleStats(startDate, endDate),
+            labours: yield labourStats(startDate, endDate),
         });
     }
     catch (err) {

@@ -22,7 +22,7 @@ const addLeaseQueryController = (req, res, next) => __awaiter(void 0, void 0, vo
             return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
         }
         const result = yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
-            var _a;
+            var _a, _b;
             const id = leaseQuery.leaseQueryId || (yield (0, generateLeaseQueryID_1.generateLeaseQueryID)(prisma));
             const addedLeaseQuery = yield prisma.leaseQuery.create({
                 data: {
@@ -36,16 +36,31 @@ const addLeaseQueryController = (req, res, next) => __awaiter(void 0, void 0, vo
                     createdBy: req.user.userId,
                     leaseQueryAttachments: {
                         create: ((_a = leaseQuery.leaseQueryAttachments) === null || _a === void 0 ? void 0 : _a.map((attachment) => ({
+                            membershipId: leaseQuery.membershipId,
                             documentName: attachment.documentName,
                             documentPath: attachment.documentPath
                         }))) || []
+                    },
+                    leaseQueryHistory: {
+                        create: [
+                            ...(((_b = leaseQuery.LeaseQueryHistory) === null || _b === void 0 ? void 0 : _b.map((history) => ({
+                                presentLeaseHolder: history.presentLeaseHolder,
+                                fromDate: history.fromDate,
+                                toDate: history.toDate
+                            }))) || []),
+                            {
+                                membershipId: leaseQuery.membershipId,
+                                fromDate: leaseQuery.dateOfLease,
+                                toDate: leaseQuery.expiryOfLease,
+                            }
+                        ]
                     }
                 }
             });
             if (!addedLeaseQuery) {
                 throw new bad_request_1.BadRequestsException("Failed to create lease query", root_1.ErrorCode.BAD_REQUEST);
             }
-            return addedLeaseQuery;
+            return { addedLeaseQuery };
         }));
         res.status(201).json({
             message: "Lease query added successfully",

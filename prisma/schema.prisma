@@ -159,6 +159,8 @@ model Members {
   approvedOrDeclinedByUser User?                     @relation("ApprovedOrDeclinedRelation", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
   leaseQuery               LeaseQuery[]              @relation("LeaseQuery")
   taxInvoice               TaxInvoice[]              @relation("TaxInvoice")
+  LeaseQueryHistory        LeaseQueryHistory[]       @relation("LeaseQueryHistory")
+  leaseQueryAttachments   LeaseQueryAttachments[]   @relation("LeaseQueryAttachments")
 
   @@index([id, membershipId, electricalUscNumber, scNumber])
   @@map("members")
@@ -227,18 +229,23 @@ model ComplianceDetails {
 
   gstInNumber          String @unique @db.VarChar(50)
   gstInCertificatePath String @db.VarChar(225)
+  gstExpiredAt   DateTime? @db.DateTime()
 
   factoryLicenseNumber String @unique @db.VarChar(50)
   factoryLicensePath   String @db.VarChar(225)
+  factoryLicenseExpiredAt DateTime? @db.DateTime()
 
   tspcbOrderNumber     String @unique @db.VarChar(50)
   tspcbCertificatePath String @db.VarChar(225)
+  tspcbExpiredAt       DateTime? @db.DateTime()
 
   mdlNumber          String @unique @db.VarChar(50)
   mdlCertificatePath String @db.VarChar(225)
+  mdlExpiredAt       DateTime? @db.DateTime()
 
   udyamCertificateNumber String @unique @db.VarChar(50)
   udyamCertificatePath   String @db.VarChar(225)
+  udyamCertificateExpiredAt DateTime? @db.DateTime()
 
   fullAddress   String @unique @db.VarChar(225)
   partnerName   String @db.VarChar(50)
@@ -270,12 +277,10 @@ model SimilarMembershipInquiry {
 
 model Attachments {
   id Int @id @default(autoincrement())
-
   membershipId String   @db.VarChar(225)
-  // attachmentType AttachmentType @default(SALE_DEED)
   documentName String   @db.VarChar(50)
   documentPath String   @db.VarChar(225)
-  // filePath       String         @db.VarChar(225)
+  expiredAt   DateTime? @db.DateTime() // Optional expiry date for the attachment
   createdAt    DateTime @default(now())
   modifiedAt   DateTime @updatedAt
   members      Members  @relation("Attachments", fields: [membershipId], references: [membershipId], onDelete: Cascade)
@@ -577,6 +582,7 @@ model LeaseQuery {
   members            Members          @relation("LeaseQuery", fields: [membershipId], references: [membershipId], onDelete: Cascade)
 
   leaseQueryAttachments LeaseQueryAttachments[] @relation("LeaseQueryAttachments")
+  leaseQueryHistory     LeaseQueryHistory[]     @relation("LeaseQueryHistory")
 
   @@map("lease_queries")
 }
@@ -584,14 +590,27 @@ model LeaseQuery {
 model LeaseQueryAttachments {
   id           Int        @id @default(autoincrement())
   leaseQueryId String     @db.VarChar(225)
+  membershipId String     @db.VarChar(225)
   documentName String     @db.VarChar(225)
   documentPath String     @db.VarChar(225)
   createdAt    DateTime   @default(now())
   leaseQuery   LeaseQuery @relation("LeaseQueryAttachments", fields: [leaseQueryId], references: [leaseQueryId], onDelete: Cascade)
-
+  members     Members    @relation("LeaseQueryAttachments", fields: [membershipId], references: [membershipId], onDelete: Cascade)
   // @@unique([leaseQueryId, documentName]) // Ensures a unique entry per lease and document name
   @@index([leaseQueryId])
   @@map("lease_query_attachments")
+}
+
+model LeaseQueryHistory {
+  id              Int        @id @default(autoincrement())
+  leaseQueryId    String     @db.VarChar(225)
+  membershipId    String?    @db.VarChar(225)
+  leaseHolderName String?    @db.VarChar(50)
+  fromDate        DateTime   @db.DateTime()
+  toDate          DateTime   @db.DateTime()
+  createdAt       DateTime   @default(now())
+  leaseQuery      LeaseQuery @relation("LeaseQueryHistory", fields: [leaseQueryId], references: [leaseQueryId], onDelete: Cascade)
+  members         Members?   @relation("LeaseQueryHistory", fields: [membershipId], references: [membershipId], onDelete: Cascade)
 }
 
 model TaxInvoice {
