@@ -173,15 +173,18 @@ exports.MemberUpdateSchema = zod_1.z.object({
     relativeName: zod_1.z.string().max(50).optional(),
     gender: Gender.optional(),
     firmName: zod_1.z.string().max(50).optional(),
-    partnerName: zod_1.z.string().max(50).optional(),
-    officeNumber: zod_1.z.string().max(15).optional(),
-    phoneNumber1: zod_1.z.string().max(15).optional(),
+    proprietorName: zod_1.z.string().max(50),
+    phoneNumber1: zod_1.z.string().max(15),
     phoneNumber2: zod_1.z.string().max(15).optional(),
     surveyNumber: zod_1.z.string().max(100).optional(),
     village: zod_1.z.string().max(50).optional(),
     zone: zod_1.z.string().max(50).optional(),
-    ownershipType: OwnershipType.optional(),
-    businessType: BusinessType.optional(),
+    mandal: zod_1.z.string().max(50).optional(),
+    district: zod_1.z.string().max(50).optional(),
+    state: zod_1.z.string().max(50).optional(),
+    pinCode: zod_1.z.string().max(10).optional(),
+    proprietorStatus: OwnershipType.optional(),
+    proprietorType: BusinessType.optional(),
     sanctionedHP: zod_1.z.number().refine((val) => val >= 0, {
         message: "Sanctioned HP must be a positive decimal",
     }).optional(),
@@ -220,15 +223,14 @@ exports.MemberUpdateSchema = zod_1.z.object({
     data.relativeName !== undefined ||
     data.gender !== undefined ||
     data.firmName !== undefined ||
-    data.partnerName !== undefined ||
-    data.officeNumber !== undefined ||
+    data.proprietorName !== undefined ||
     data.phoneNumber1 !== undefined ||
     data.phoneNumber2 !== undefined ||
     data.surveyNumber !== undefined ||
     data.village !== undefined ||
     data.zone !== undefined ||
-    data.ownershipType !== undefined ||
-    data.businessType !== undefined ||
+    data.proprietorStatus !== undefined ||
+    data.proprietorType !== undefined ||
     data.sanctionedHP !== undefined ||
     (data.partnerDetails &&
         ((data.partnerDetails.newPartnerDetails && data.partnerDetails.newPartnerDetails.length > 0) ||
