@@ -280,10 +280,10 @@ const getMemberById = (req, res, next) => __awaiter(void 0, void 0, void 0, func
             return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
         }
         // Check both possible Redis keys
-        const cachedMember = yield __1.redis.get(`member:lookup:${inputId}`);
-        if (cachedMember) {
-            return res.json(JSON.parse(cachedMember));
-        }
+        // const cachedMember = await redis.get(`member:lookup:${inputId}`);
+        // if (cachedMember) {
+        //   return res.json(JSON.parse(cachedMember));
+        // }
         // Fetch from DB
         const memberFromDb = yield __1.prismaClient.members.findFirst({
             where: {
@@ -306,12 +306,15 @@ const getMemberById = (req, res, next) => __awaiter(void 0, void 0, void 0, func
             return res.status(404).json({ message: "Member not found" });
         }
         // Use `membershipId` as the canonical Redis key
-        const canonicalRedisKey = `member:lookup:${memberFromDb.membershipId}`;
-        yield __1.redis.set(canonicalRedisKey, JSON.stringify(memberFromDb));
+        // const canonicalRedisKey = `member:lookup:${memberFromDb.membershipId}`;
+        // await redis.set(canonicalRedisKey, JSON.stringify(memberFromDb));
         // Optional: set aliases so both IDs point to the same Redis key
-        if (memberFromDb.electricalUscNumber) {
-            yield __1.redis.set(`member:lookup:${memberFromDb.electricalUscNumber}`, JSON.stringify(memberFromDb));
-        }
+        // if (memberFromDb.electricalUscNumber) {
+        //   await redis.set(
+        //     `member:lookup:${memberFromDb.electricalUscNumber}`,
+        //     JSON.stringify(memberFromDb)
+        //   );
+        // }
         return res.json(memberFromDb);
     }
     catch (error) {
