@@ -173,8 +173,8 @@ exports.MemberUpdateSchema = zod_1.z.object({
     relativeName: zod_1.z.string().max(50).optional(),
     gender: Gender.optional(),
     firmName: zod_1.z.string().max(50).optional(),
-    proprietorName: zod_1.z.string().max(50),
-    phoneNumber1: zod_1.z.string().max(15),
+    proprietorName: zod_1.z.string().max(50).optional(),
+    phoneNumber1: zod_1.z.string().max(15).optional(),
     phoneNumber2: zod_1.z.string().max(15).optional(),
     surveyNumber: zod_1.z.string().max(100).optional(),
     village: zod_1.z.string().max(50).optional(),
@@ -227,6 +227,10 @@ exports.MemberUpdateSchema = zod_1.z.object({
     data.phoneNumber1 !== undefined ||
     data.phoneNumber2 !== undefined ||
     data.surveyNumber !== undefined ||
+    data.district !== undefined ||
+    data.state !== undefined ||
+    data.pinCode !== undefined ||
+    data.mandal !== undefined ||
     data.village !== undefined ||
     data.zone !== undefined ||
     data.proprietorStatus !== undefined ||
