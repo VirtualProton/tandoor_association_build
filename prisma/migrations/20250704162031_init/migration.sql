@@ -69,6 +69,16 @@ CREATE TABLE `TripIdTracker` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `MeetIdTracker` (
+    `id` INTEGER NOT NULL DEFAULT 1,
+    `year` INTEGER NOT NULL,
+    `counter` INTEGER NOT NULL,
+
+    UNIQUE INDEX `MeetIdTracker_year_key`(`year`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `users` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `fullName` VARCHAR(50) NOT NULL,
@@ -183,14 +193,19 @@ CREATE TABLE `compliance_details` (
     `membershipId` VARCHAR(191) NOT NULL,
     `gstInNumber` VARCHAR(50) NOT NULL,
     `gstInCertificatePath` VARCHAR(225) NOT NULL,
+    `gstExpiredAt` DATETIME NULL,
     `factoryLicenseNumber` VARCHAR(50) NOT NULL,
     `factoryLicensePath` VARCHAR(225) NOT NULL,
+    `factoryLicenseExpiredAt` DATETIME NULL,
     `tspcbOrderNumber` VARCHAR(50) NOT NULL,
     `tspcbCertificatePath` VARCHAR(225) NOT NULL,
+    `tspcbExpiredAt` DATETIME NULL,
     `mdlNumber` VARCHAR(50) NOT NULL,
     `mdlCertificatePath` VARCHAR(225) NOT NULL,
+    `mdlExpiredAt` DATETIME NULL,
     `udyamCertificateNumber` VARCHAR(50) NOT NULL,
     `udyamCertificatePath` VARCHAR(225) NOT NULL,
+    `udyamCertificateExpiredAt` DATETIME NULL,
     `fullAddress` VARCHAR(225) NOT NULL,
     `partnerName` VARCHAR(50) NOT NULL,
     `contactNumber` VARCHAR(13) NOT NULL,
@@ -232,6 +247,7 @@ CREATE TABLE `attachments` (
     `membershipId` VARCHAR(225) NOT NULL,
     `documentName` VARCHAR(50) NOT NULL,
     `documentPath` VARCHAR(225) NOT NULL,
+    `expiredAt` DATETIME NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `modifiedAt` DATETIME(3) NOT NULL,
 
@@ -370,6 +386,7 @@ CREATE TABLE `labours_pending_changes` (
     `labourId` VARCHAR(191) NOT NULL,
     `approvalStatus` ENUM('PENDING', 'APPROVED', 'DECLINED') NOT NULL DEFAULT 'PENDING',
     `approvedOrDeclinedBy` INTEGER NULL,
+    `note` TEXT NULL,
     `updatedData` JSON NOT NULL,
     `modifiedBy` INTEGER NOT NULL,
     `modifiedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -382,7 +399,7 @@ CREATE TABLE `labour_history` (
     `Id` INTEGER NOT NULL AUTO_INCREMENT,
     `labourId` VARCHAR(225) NOT NULL,
     `assignedTo` VARCHAR(225) NULL,
-    `onBench` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'TRUE',
+    `labourStatus` ENUM('ACTIVE', 'INACTIVE', 'ON_BENCH') NOT NULL,
     `reasonForTransfer` VARCHAR(225) NULL,
     `fromDate` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `toDate` DATETIME(3) NULL,
@@ -437,12 +454,12 @@ CREATE TABLE `trip_record` (
 
 -- CreateTable
 CREATE TABLE `meetings` (
-    `id` VARCHAR(191) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `meetId` VARCHAR(255) NOT NULL,
     `title` VARCHAR(255) NOT NULL,
     `agenda` TEXT NULL,
     `notes` TEXT NULL,
     `startTime` DATETIME(3) NOT NULL,
-    `endTime` DATETIME(3) NOT NULL,
     `location` VARCHAR(255) NULL,
     `status` ENUM('SCHEDULED', 'COMPLETED', 'CANCELLED') NOT NULL DEFAULT 'SCHEDULED',
     `createdBy` INTEGER NOT NULL,
@@ -451,13 +468,14 @@ CREATE TABLE `meetings` (
     `updatedAt` DATETIME(3) NOT NULL,
     `modifiedBy` INTEGER NULL,
 
+    UNIQUE INDEX `meetings_meetId_key`(`meetId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `follow_up_meetings` (
     `id` VARCHAR(191) NOT NULL,
-    `meetingId` VARCHAR(36) NOT NULL,
+    `meetId` VARCHAR(36) NOT NULL,
     `dateTime` DATETIME(3) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
@@ -467,7 +485,7 @@ CREATE TABLE `follow_up_meetings` (
 -- CreateTable
 CREATE TABLE `meeting_attendees` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `meetingId` VARCHAR(225) NOT NULL,
+    `meetId` VARCHAR(225) NOT NULL,
     `membershipId` VARCHAR(225) NULL,
     `vehicleId` VARCHAR(225) NULL,
     `vehicleRole` ENUM('OWNER', 'DRIVER', 'BOTH') NULL,
@@ -475,7 +493,7 @@ CREATE TABLE `meeting_attendees` (
     `isCustom` ENUM('TRUE', 'FALSE') NOT NULL DEFAULT 'FALSE',
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    UNIQUE INDEX `meeting_attendees_meetingId_membershipId_vehicleId_key`(`meetingId`, `membershipId`, `vehicleId`),
+    UNIQUE INDEX `meeting_attendees_meetId_membershipId_vehicleId_key`(`meetId`, `membershipId`, `vehicleId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -502,6 +520,7 @@ CREATE TABLE `lease_queries` (
 CREATE TABLE `lease_query_attachments` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `leaseQueryId` VARCHAR(225) NOT NULL,
+    `membershipId` VARCHAR(225) NOT NULL,
     `documentName` VARCHAR(225) NOT NULL,
     `documentPath` VARCHAR(225) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -511,18 +530,24 @@ CREATE TABLE `lease_query_attachments` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `LeaseQueryHistory` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `leaseQueryId` VARCHAR(225) NOT NULL,
+    `membershipId` VARCHAR(225) NULL,
+    `leaseHolderName` VARCHAR(50) NULL,
+    `fromDate` DATETIME NOT NULL,
+    `toDate` DATETIME NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `tax_invoice` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `invoiceId` VARCHAR(225) NOT NULL,
     `membershipId` VARCHAR(225) NOT NULL,
     `invoiceDate` DATETIME(3) NOT NULL,
-    `hsnCode` VARCHAR(225) NOT NULL,
-    `particular` TEXT NOT NULL,
-    `stoneCount` INTEGER NOT NULL,
-    `size` DECIMAL(10, 2) NOT NULL,
-    `totalSqFeet` DECIMAL(10, 2) NOT NULL,
-    `ratePerSqFeet` DECIMAL(10, 2) NOT NULL,
-    `amount` DECIMAL(10, 2) NOT NULL,
     `cGSTInPercent` INTEGER NOT NULL,
     `sGSTInPercent` INTEGER NOT NULL,
     `iGSTInPercent` INTEGER NOT NULL,
@@ -534,6 +559,21 @@ CREATE TABLE `tax_invoice` (
     `modifiedBy` INTEGER NULL,
 
     UNIQUE INDEX `tax_invoice_invoiceId_key`(`invoiceId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `invoice_item` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `invoiceId` VARCHAR(225) NOT NULL,
+    `hsnCode` VARCHAR(225) NOT NULL,
+    `particular` TEXT NOT NULL,
+    `stoneCount` INTEGER NOT NULL,
+    `size` DECIMAL(10, 2) NOT NULL,
+    `totalSqFeet` DECIMAL(10, 2) NOT NULL,
+    `ratePerSqFeet` DECIMAL(10, 2) NOT NULL,
+    `amount` DECIMAL(10, 2) NOT NULL,
+
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -646,10 +686,10 @@ ALTER TABLE `meetings` ADD CONSTRAINT `meetings_modifiedBy_fkey` FOREIGN KEY (`m
 ALTER TABLE `meetings` ADD CONSTRAINT `meetings_createdBy_fkey` FOREIGN KEY (`createdBy`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `follow_up_meetings` ADD CONSTRAINT `follow_up_meetings_meetingId_fkey` FOREIGN KEY (`meetingId`) REFERENCES `meetings`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `follow_up_meetings` ADD CONSTRAINT `follow_up_meetings_meetId_fkey` FOREIGN KEY (`meetId`) REFERENCES `meetings`(`meetId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `meeting_attendees` ADD CONSTRAINT `meeting_attendees_meetingId_fkey` FOREIGN KEY (`meetingId`) REFERENCES `meetings`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `meeting_attendees` ADD CONSTRAINT `meeting_attendees_meetId_fkey` FOREIGN KEY (`meetId`) REFERENCES `meetings`(`meetId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `meeting_attendees` ADD CONSTRAINT `meeting_attendees_membershipId_fkey` FOREIGN KEY (`membershipId`) REFERENCES `members`(`membershipId`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -673,6 +713,15 @@ ALTER TABLE `lease_queries` ADD CONSTRAINT `lease_queries_membershipId_fkey` FOR
 ALTER TABLE `lease_query_attachments` ADD CONSTRAINT `lease_query_attachments_leaseQueryId_fkey` FOREIGN KEY (`leaseQueryId`) REFERENCES `lease_queries`(`leaseQueryId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `lease_query_attachments` ADD CONSTRAINT `lease_query_attachments_membershipId_fkey` FOREIGN KEY (`membershipId`) REFERENCES `members`(`membershipId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `LeaseQueryHistory` ADD CONSTRAINT `LeaseQueryHistory_leaseQueryId_fkey` FOREIGN KEY (`leaseQueryId`) REFERENCES `lease_queries`(`leaseQueryId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `LeaseQueryHistory` ADD CONSTRAINT `LeaseQueryHistory_membershipId_fkey` FOREIGN KEY (`membershipId`) REFERENCES `members`(`membershipId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `tax_invoice` ADD CONSTRAINT `tax_invoice_createdBy_fkey` FOREIGN KEY (`createdBy`) REFERENCES `users`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -680,3 +729,6 @@ ALTER TABLE `tax_invoice` ADD CONSTRAINT `tax_invoice_modifiedBy_fkey` FOREIGN K
 
 -- AddForeignKey
 ALTER TABLE `tax_invoice` ADD CONSTRAINT `tax_invoice_membershipId_fkey` FOREIGN KEY (`membershipId`) REFERENCES `members`(`membershipId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `invoice_item` ADD CONSTRAINT `invoice_item_invoiceId_fkey` FOREIGN KEY (`invoiceId`) REFERENCES `tax_invoice`(`invoiceId`) ON DELETE CASCADE ON UPDATE CASCADE;
