@@ -38,9 +38,9 @@ exports.TaxInvoicePartialUpdateSchema = zod_1.z.object({
     iGSTInPercent: zod_1.z.number().int().optional(),
     subTotal: zod_1.z.coerce.number().nonnegative().max(99999999.99).optional(),
     total: zod_1.z.coerce.number().nonnegative().max(99999999.99).optional(),
-    newInvoiceItemSchema: zod_1.z.array(newInvoiceItemSchema).optional(),
-    updateInvoiceItemSchema: zod_1.z.array(updateInvoiceItemSchema).optional(),
-    deleteInvoiceItemSchema: zod_1.z.array(deleteInvoiceItemSchema).optional(),
+    newInvoiceItems: zod_1.z.array(newInvoiceItemSchema).optional(),
+    updateInvoiceItems: zod_1.z.array(updateInvoiceItemSchema).optional(),
+    deleteInvoiceItems: zod_1.z.array(deleteInvoiceItemSchema).optional(),
 }).refine((data) => Object.keys(Object.assign(Object.assign({}, data), { invoiceId: undefined })).some((key) => key !== "invoiceId" && data[key] !== undefined), {
     message: "At least one field other than invoiceId must be provided",
     path: [],

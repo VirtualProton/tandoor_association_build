@@ -27,24 +27,25 @@ const root_1 = require("../../exceptions/root");
 const updateTaxInvoice_1 = require("../../schema/taxInvoice/updateTaxInvoice");
 const updateTaxInvoice = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const _a = updateTaxInvoice_1.TaxInvoicePartialUpdateSchema.parse(req.body), { invoiceId, newInvoiceItemSchema, updateInvoiceItemSchema, deleteInvoiceItemSchema } = _a, updateData = __rest(_a, ["invoiceId", "newInvoiceItemSchema", "updateInvoiceItemSchema", "deleteInvoiceItemSchema"]);
+        const _a = updateTaxInvoice_1.TaxInvoicePartialUpdateSchema.parse(req.body), { invoiceId, newInvoiceItems, updateInvoiceItems, deleteInvoiceItems } = _a, updateData = __rest(_a, ["invoiceId", "newInvoiceItems", "updateInvoiceItems", "deleteInvoiceItems"]);
         if (!["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
             return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
         }
-        if (deleteInvoiceItemSchema && deleteInvoiceItemSchema.length > 0) {
+        if (deleteInvoiceItems && deleteInvoiceItems.length > 0) {
             const deleteItems = yield __1.prismaClient.invoiceItem.deleteMany({
                 where: {
                     id: {
-                        in: deleteInvoiceItemSchema.map(item => item.id),
+                        in: deleteInvoiceItems.map(item => item.id),
                     },
                     taxInvoice: {
                         invoiceId: invoiceId,
                     },
                 },
             });
+            console.log(deleteItems);
         }
-        if (updateInvoiceItemSchema && updateInvoiceItemSchema.length > 0) {
-            const updateItems = yield Promise.all(updateInvoiceItemSchema.map((item) => __awaiter(void 0, void 0, void 0, function* () {
+        if (updateInvoiceItems && updateInvoiceItems.length > 0) {
+            const updateItems = yield Promise.all(updateInvoiceItems.map((item) => __awaiter(void 0, void 0, void 0, function* () {
                 const { id } = item, updateItemData = __rest(item, ["id"]);
                 return yield __1.prismaClient.invoiceItem.update({
                     where: { id },
@@ -52,9 +53,9 @@ const updateTaxInvoice = (req, res, next) => __awaiter(void 0, void 0, void 0, f
                 });
             })));
         }
-        if (newInvoiceItemSchema && newInvoiceItemSchema.length > 0) {
+        if (newInvoiceItems && newInvoiceItems.length > 0) {
             const newItems = yield __1.prismaClient.invoiceItem.createMany({
-                data: newInvoiceItemSchema.map(item => (Object.assign(Object.assign({}, item), { invoiceId: invoiceId }))),
+                data: newInvoiceItems.map(item => (Object.assign(Object.assign({}, item), { invoiceId: invoiceId }))),
             });
         }
         const updatedTaxInvoice = yield __1.prismaClient.taxInvoice.update({
