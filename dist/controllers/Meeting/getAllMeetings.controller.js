@@ -24,6 +24,26 @@ const getAllMeetings = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
             return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
         }
         const meetings = yield __1.prismaClient.meetings.findMany({
+            include: {
+                memberAttendees: {
+                    include: {
+                        zones: true,
+                        mandals: true,
+                        customMembers: true
+                    }
+                },
+                vehicleAttendees: {
+                    include: {
+                        customVehicle: true
+                    }
+                },
+                labourAttendees: {
+                    include: {
+                        membershipIds: true,
+                        customLabours: true
+                    }
+                }
+            },
             orderBy: {
                 startTime: 'desc', // or 'asc'
             }

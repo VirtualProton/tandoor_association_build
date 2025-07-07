@@ -38,221 +38,109 @@ const scheduleMeeting = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         console.log("followUpMeeting", followUpMeeting);
         console.log("meetingData", meetingData);
         const result = yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
-            const newMeeting = yield scheduleMeetingHandler(prisma, meetingData, attendees, req.user);
-            const newFollowUpMeeting = yield followUpMeetingHandler(prisma, followUpMeeting, newMeeting.meetId);
-            const meetingAttendees = yield meetingAttendeesHandler(prisma, attendees, newMeeting.meetId);
-            return { newMeeting, newFollowUpMeeting, meetingAttendees };
-        }));
-        res.status(200).json(result);
+            const meetId = yield (0, generateMeetID_1.generateMeetID)(prisma);
+            const newMeeting = yield prisma.meetings.create({
+                data: Object.assign(Object.assign({ meetId }, meetingData), { createdBy: req.user.userId, followUpMeetings: {
+                        create: followUpMeeting.map((item) => ({
+                            dateTime: item.dateTime
+                        })),
+                    } }),
+            });
+            const newAttendees = yield meetingAttendeesHandler(prisma, attendees, newMeeting.id);
+            return res.status(200).json({ message: "Meeting successfully scheduled", data: { newMeeting, newAttendees } });
+        }), { timeout: 20000 });
     }
     catch (e) {
+        console.log(e);
         return next(new bad_request_1.BadRequestsException(e.message, root_1.ErrorCode.BAD_REQUEST));
     }
 });
 exports.scheduleMeeting = scheduleMeeting;
-const scheduleMeetingHandler = (prisma, meetingDetails, attendees, user) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield prisma.meetings.create({
-        data: Object.assign(Object.assign({ meetId: yield (0, generateMeetID_1.generateMeetID)(prisma) }, meetingDetails), { attendees: attendees, createdBy: user.userId }),
-    });
-});
-const followUpMeetingHandler = (prisma, followUpMeeting, meetId) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield prisma.followUpMeeting.createMany({
-        data: followUpMeeting.map((item) => ({
-            meetId: meetId,
-            dateTime: new Date(item.dateTime)
-        }))
-    });
-});
 const meetingAttendeesHandler = (prisma, attendees, meetId) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e, _f;
     const { memberAttendees, vehicleAttendees, labourAttendees } = attendees;
-    //Member
+    let newMemberAttendees;
+    let newVehicleAttendees;
+    let newLabourAttendees;
     if (memberAttendees) {
         if (memberAttendees.all) {
-            const allMembers = yield prisma.members.findMany({
-                where: {
-                    membershipStatus: "ACTIVE"
-                },
-                select: {
-                    membershipId: true,
-                },
-            });
-            yield prisma.meetingAttendees.createMany({
-                data: allMembers.map((item) => ({
-                    meetId: meetId,
-                    membershipId: item.membershipId,
-                }))
+            newMemberAttendees = yield prisma.memberAttendees.create({
+                data: {
+                    meetId,
+                    all: memberAttendees.all
+                }
             });
         }
         else {
-            let members = [];
-            if (memberAttendees.zone && memberAttendees.zone.length > 0) {
-                const zoneMembers = yield prisma.members.findMany({
-                    where: {
-                        membershipStatus: "ACTIVE",
-                        zone: { in: memberAttendees.zone }
+            newMemberAttendees = yield prisma.memberAttendees.create({
+                data: {
+                    meetId,
+                    allExecutives: memberAttendees.allExecutives ? memberAttendees.allExecutives : false,
+                    zones: {
+                        create: (_a = memberAttendees.zone) === null || _a === void 0 ? void 0 : _a.map((item) => ({ zone: item }))
                     },
-                    select: {
-                        membershipId: true,
+                    mandals: {
+                        create: (_b = memberAttendees.mandal) === null || _b === void 0 ? void 0 : _b.map((item) => ({ mandal: item }))
                     },
-                });
-                members.push(...zoneMembers);
-            }
-            if (memberAttendees.mandal && memberAttendees.mandal.length > 0) {
-                const mandalMembers = yield prisma.members.findMany({
-                    where: {
-                        membershipStatus: "ACTIVE",
-                        mandal: { in: memberAttendees.mandal }
-                    },
-                    select: {
-                        membershipId: true,
-                    },
-                });
-                members.push(...mandalMembers);
-            }
-            if (memberAttendees.allExecutives) {
-                const allExecutivesMembers = yield prisma.members.findMany({
-                    where: {
-                        membershipStatus: "ACTIVE",
-                        similarMembershipInquiry: {
-                            is: {
-                                is_executive_member: "TRUE"
-                            }
-                        }
-                    },
-                    select: {
-                        membershipId: true
+                    customMembers: {
+                        create: (_c = memberAttendees.custom) === null || _c === void 0 ? void 0 : _c.map((item) => ({ membershipId: item }))
                     }
-                });
-                members.push(...allExecutivesMembers);
-            }
-            if (memberAttendees.custom && memberAttendees.custom.length > 0) {
-                for (let i = 0; i < memberAttendees.custom.length; i++) {
-                    members.push({
-                        "membershipId": memberAttendees.custom[i],
-                        "isCustom": "TRUE"
-                    });
                 }
-            }
-            const uniqueIds = yield removeDuplicateMembershipId(members);
-            yield prisma.meetingAttendees.createMany({
-                data: uniqueIds.map((item) => ({
-                    meetId: meetId,
-                    membershipId: item.membershipId,
-                    isCustom: item.isCustom ? item.isCustom : "FALSE"
-                }))
             });
         }
     }
-    //vehicleAttendees
     if (vehicleAttendees) {
         if (vehicleAttendees.all) {
-            const allVehicles = yield prisma.vehicles.findMany({
-                where: {
-                    status: {
-                        not: "INACTIVE"
-                    }
-                },
-                select: {
-                    vehicleId: true,
-                },
-            });
-            yield prisma.meetingAttendees.createMany({
-                data: allVehicles.map((item) => ({
-                    meetId: meetId,
-                    vehicleId: item.vehicleId,
-                    vehicleRole: (vehicleAttendees.owner && vehicleAttendees.driver) ? "BOTH" : vehicleAttendees.driver ? "DRIVER" : "OWNER"
-                }))
+            newVehicleAttendees = yield prisma.vehicleAttendees.create({
+                data: {
+                    meetId,
+                    owner: vehicleAttendees.owner,
+                    driver: vehicleAttendees.driver,
+                    all: vehicleAttendees.all,
+                }
             });
         }
-        if (vehicleAttendees.custom && vehicleAttendees.custom.length > 0) {
-            yield prisma.meetingAttendees.createMany({
-                data: vehicleAttendees.custom.map((item) => ({
-                    meetId: meetId,
-                    vehicleId: item.vehicleId,
-                    vehicleRole: (vehicleAttendees.owner && vehicleAttendees.driver) ? "BOTH" : vehicleAttendees.driver ? "DRIVER" : "OWNER",
-                    isCustom: "TRUE"
-                }))
+        else {
+            newVehicleAttendees = yield prisma.vehicleAttendees.create({
+                data: {
+                    meetId,
+                    owner: vehicleAttendees.owner,
+                    driver: vehicleAttendees.driver,
+                    all: vehicleAttendees.all,
+                    customVehicle: {
+                        create: (_d = vehicleAttendees.custom) === null || _d === void 0 ? void 0 : _d.map((item) => ({ vehicleId: item }))
+                    }
+                }
             });
         }
     }
     if (labourAttendees) {
         if (labourAttendees.all) {
-            const allLabours = yield prisma.labours.findMany({
-                where: {
-                    labourStatus: "ACTIVE"
-                },
-                select: {
-                    labourId: true
+            newLabourAttendees = yield prisma.labourAttendees.create({
+                data: {
+                    meetId,
+                    all: labourAttendees.all,
                 }
-            });
-            yield prisma.meetingAttendees.createMany({
-                data: allLabours.custom.map((item) => ({
-                    meetId: meetId,
-                    labourId: item.labourId,
-                }))
             });
         }
         else {
-            let labours = [];
-            if (labourAttendees.membershipID && labourAttendees.membershipID.length > 0) {
-                const laboursByMember = yield prisma.labours.findMany({
-                    where: {
-                        assignedTo: { in: labourAttendees.membershipID }
+            newLabourAttendees = yield prisma.labourAttendees.create({
+                data: {
+                    meetId,
+                    all: labourAttendees.all,
+                    membershipIds: {
+                        create: (_e = labourAttendees.membershipID) === null || _e === void 0 ? void 0 : _e.map((item) => ({ membershipId: item }))
                     },
-                    select: {
-                        labourId: true,
-                    },
-                });
-                labours.push(...laboursByMember);
-            }
-            if (labourAttendees.custom && labourAttendees.custom.length > 0) {
-                for (let i = 0; i < labourAttendees.custom.length; i++) {
-                    labours.push({
-                        labourId: labourAttendees.custom[i],
-                        isCustom: "TRUE"
-                    });
+                    customLabours: {
+                        create: (_f = labourAttendees.custom) === null || _f === void 0 ? void 0 : _f.map((item) => ({ labourId: item }))
+                    }
                 }
-            }
-            console.log(labours);
-            const uniqueIds = yield removeDuplicateLabourId(labours);
-            yield prisma.meetingAttendees.createMany({
-                data: uniqueIds.map((item) => ({
-                    meetId: meetId,
-                    labourId: item.labourId,
-                    isCustom: item.isCustom ? item.isCustom : "FALSE"
-                }))
             });
         }
     }
-    return;
-});
-const removeDuplicateMembershipId = (data) => __awaiter(void 0, void 0, void 0, function* () {
-    return Array.from(data.reduce((map, item) => {
-        const existing = map.get(item.labourId);
-        const existingIsCustom = (existing === null || existing === void 0 ? void 0 : existing.isCustom) === 'TRUE';
-        const currentIsCustom = (item === null || item === void 0 ? void 0 : item.isCustom) === 'TRUE';
-        // Prefer item without isCustom
-        if (!existing || (existingIsCustom && !currentIsCustom)) {
-            map.set(item.labourId, item);
-        }
-        return map;
-    }, new Map()).values());
-});
-const removeDuplicateLabourId = (data) => __awaiter(void 0, void 0, void 0, function* () {
-    return Array.from(data.reduce((map, item) => {
-        const existing = map.get(item.labourId);
-        // If no entry exists yet, set it
-        if (!existing) {
-            map.set(item.labourId, item);
-        }
-        else {
-            // If current isCustom is falsy and existing isCustom is truthy, replace it
-            const existingIsCustom = existing.isCustom === 'TRUE';
-            const currentIsCustom = item.isCustom === 'TRUE';
-            if (existingIsCustom && !currentIsCustom) {
-                map.set(item.labourId, item); // Prefer non-custom
-            }
-        }
-        return map;
-    }, new Map()).values());
+    return {
+        newMemberAttendees,
+        newVehicleAttendees,
+        newLabourAttendees
+    };
 });
