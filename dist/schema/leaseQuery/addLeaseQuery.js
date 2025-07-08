@@ -7,6 +7,7 @@ const LeaseQueryAttachmentsSchema = zod_1.z.object({
     documentPath: zod_1.z.string().max(225),
 });
 const LeaseQueryHistorySchema = zod_1.z.object({
+    membershipId: zod_1.z.string().max(225),
     leaseHolderName: zod_1.z.string().max(225).optional().nullable(),
     fromDate: zod_1.z.coerce.date(),
     toDate: zod_1.z.coerce.date(),

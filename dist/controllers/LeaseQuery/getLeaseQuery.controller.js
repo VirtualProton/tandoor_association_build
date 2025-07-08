@@ -17,7 +17,21 @@ const getLeaseQueryById = (req, res, next) => __awaiter(void 0, void 0, void 0, 
     const { leaseQueryId } = req.params;
     try {
         const leaseQuery = yield __1.prismaClient.leaseQuery.findUnique({
-            where: { leaseQueryId }
+            where: { leaseQueryId },
+            include: {
+                leaseQueryAttachments: true,
+                leaseQueryHistory: true,
+                members: {
+                    select: {
+                        membershipId: true,
+                        applicantName: true,
+                        firmName: true,
+                        phoneNumber1: true,
+                        zone: true,
+                        mandal: true
+                    }
+                }
+            }
         });
         if (!leaseQuery) {
             return res.status(404).json({
@@ -36,7 +50,22 @@ const getLeaseQueryById = (req, res, next) => __awaiter(void 0, void 0, void 0, 
 exports.getLeaseQueryById = getLeaseQueryById;
 const getAllLeaseQuery = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const leaseQueries = yield __1.prismaClient.leaseQuery.findMany();
+        const leaseQueries = yield __1.prismaClient.leaseQuery.findMany({
+            include: {
+                leaseQueryAttachments: true,
+                leaseQueryHistory: true,
+                members: {
+                    select: {
+                        membershipId: true,
+                        applicantName: true,
+                        firmName: true,
+                        phoneNumber1: true,
+                        zone: true,
+                        mandal: true
+                    }
+                }
+            }
+        });
         res.status(200).json({
             message: "Lease queries retrieved successfully",
             data: leaseQueries
@@ -51,7 +80,21 @@ const getLeaseQueryByMembershipId = (req, res, next) => __awaiter(void 0, void 0
     const { membershipId } = req.params;
     try {
         const leaseQueries = yield __1.prismaClient.leaseQuery.findMany({
-            where: { membershipId }
+            where: { membershipId },
+            include: {
+                leaseQueryAttachments: true,
+                leaseQueryHistory: true,
+                members: {
+                    select: {
+                        membershipId: true,
+                        applicantName: true,
+                        firmName: true,
+                        phoneNumber1: true,
+                        zone: true,
+                        mandal: true
+                    }
+                }
+            }
         });
         if (leaseQueries.length === 0) {
             return res.status(404).json({
@@ -78,7 +121,21 @@ const getLeaseQueryByStatus = (req, res, next) => __awaiter(void 0, void 0, void
     }
     try {
         const leaseQueries = yield __1.prismaClient.leaseQuery.findMany({
-            where: { status: upperStatus }
+            where: { status: upperStatus },
+            include: {
+                leaseQueryAttachments: true,
+                leaseQueryHistory: true,
+                members: {
+                    select: {
+                        membershipId: true,
+                        applicantName: true,
+                        firmName: true,
+                        phoneNumber1: true,
+                        zone: true,
+                        mandal: true
+                    }
+                }
+            }
         });
         if (leaseQueries.length === 0) {
             return res.status(404).json({

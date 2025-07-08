@@ -44,12 +44,14 @@ const addLeaseQueryController = (req, res, next) => __awaiter(void 0, void 0, vo
                     leaseQueryHistory: {
                         create: [
                             ...(((_b = leaseQuery.LeaseQueryHistory) === null || _b === void 0 ? void 0 : _b.map((history) => ({
-                                presentLeaseHolder: history.presentLeaseHolder,
+                                membershipId: history.membershipId,
+                                leaseHolderName: history.leaseHolderName,
                                 fromDate: history.fromDate,
                                 toDate: history.toDate
                             }))) || []),
                             {
                                 membershipId: leaseQuery.membershipId,
+                                leaseHolderName: leaseQuery.presentLeaseHolder,
                                 fromDate: leaseQuery.dateOfLease,
                                 toDate: leaseQuery.expiryOfLease,
                             }
