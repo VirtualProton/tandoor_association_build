@@ -8,200 +8,151 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateMeeting = void 0;
-const lodash_1 = __importDefault(require("lodash"));
+const __1 = require("../..");
+const bad_request_1 = require("../../exceptions/bad-request");
+const root_1 = require("../../exceptions/root");
+const updateMeeting_1 = require("../../schema/meeting/updateMeeting");
 const updateMeeting = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    // const updateMeetingDetails = partialMeetingSchema.parse(req.body);
-    // try {
-    //   if (!["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
-    //     return next(
-    //       new BadRequestsException("Unauthorized", ErrorCode.UNAUTHORIZED)
-    //     );
-    //   }
-    //   const result = await prismaClient.$transaction(async (prisma) => {
-    //     const existingMeeting = await prisma.meetings.findUnique({
-    //       where: { id: updateMeetingDetails.id },
-    //     });
-    //     if (!existingMeeting) {
-    //       throw new BadRequestsException(
-    //         "Meeting not found",
-    //         ErrorCode.NOT_FOUND
-    //       );
-    //     }
-    //     const changes = await calculateFieldDifferences(
-    //       existingMeeting,
-    //       updateMeetingDetails
-    //     );
-    //     if (Object.keys(changes).length === 0) {
-    //       throw new BadRequestsException(
-    //         "No changes detected",
-    //         ErrorCode.NO_DATA_PROVIDED
-    //       );
-    //     }
-    //     const updateMeeting = await updateMeetingHandler(
-    //       prisma,
-    //       changes,
-    //       req.user
-    //     );
-    //     let updateAttendees = null;
-    //     if (changes.attendees) {
-    //       // Check if the attendees have changed
-    //        updateAttendees = await meetingAttendeesHandler(
-    //         prisma,
-    //         changes.attendees,
-    //         updateMeeting.id
-    //       );
-    //     }
-    //     return { updateMeeting, updateAttendees };
-    //   });
-    //   res.status(200).json(result);
-    // } catch (e:any) {
-    //   return next(new BadRequestsException(e.message, ErrorCode.SERVER_ERROR));
-    // }
+    const _a = updateMeeting_1.partialMeetingSchema.parse(req.body), { id, attendees, newFollowUpMeeting, deleteFollowUpMeeting } = _a, meetingData = __rest(_a, ["id", "attendees", "newFollowUpMeeting", "deleteFollowUpMeeting"]);
+    try {
+        console.log("attendees", attendees);
+        console.log("New Follow Up Meetings:", newFollowUpMeeting);
+        console.log("Delete Follow Up Meetings:", deleteFollowUpMeeting);
+        console.log("Meeting Data:", meetingData);
+        if (!["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
+            return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
+        }
+        yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
+            // Update the meeting details
+            if (deleteFollowUpMeeting && deleteFollowUpMeeting.length > 0) {
+                yield prisma.followUpMeeting.deleteMany({
+                    where: {
+                        id: {
+                            in: deleteFollowUpMeeting.map((item) => item),
+                        },
+                        meetId: id,
+                    },
+                });
+            }
+            if (newFollowUpMeeting && newFollowUpMeeting.length > 0) {
+                yield prisma.followUpMeeting.createMany({
+                    data: newFollowUpMeeting.map((item) => ({ meetId: id, dateTime: item.dateTime })),
+                });
+            }
+            yield meetingAttendeesHandler(prisma, attendees, id);
+            if (meetingData) {
+                yield prisma.meetings.update({
+                    where: { id: id },
+                    data: meetingData,
+                });
+            }
+            res.status(200).json({
+                message: "Meeting successfully updated",
+            });
+        }));
+    }
+    catch (error) {
+        console.error("Error updating meeting:", error);
+        return next(new bad_request_1.BadRequestsException(error.message, root_1.ErrorCode.BAD_REQUEST));
+    }
 });
 exports.updateMeeting = updateMeeting;
-const updateMeetingHandler = (prisma, updateMeetingDetails, user) => __awaiter(void 0, void 0, void 0, function* () {
-    return yield prisma.meetings.update({
-        where: { id: updateMeetingDetails.id },
-        data: Object.assign(Object.assign({}, updateMeetingDetails), { updatedBy: user.id }),
-    });
-});
-const meetingAttendeesHandler = (prisma, attendees, meetingId) => __awaiter(void 0, void 0, void 0, function* () {
-    const del = yield prisma.meetingAttendees.deleteMany({
-        where: {
-            meetingId: meetingId,
-        },
-    });
-    let allAttendees = {};
-    if (attendees.memberAttendees) {
-        let meetingAttendees = [];
-        if (attendees.memberAttendees.all) {
-            const allMembers = yield prisma.members.findMany({
-                where: {
-                    isActive: "TRUE",
-                },
-                select: {
-                    membershipId: true,
-                },
+const meetingAttendeesHandler = (prisma, attendees, meetId) => __awaiter(void 0, void 0, void 0, function* () {
+    const { memberAttendees, vehicleAttendees, labourAttendees } = attendees;
+    if (memberAttendees) {
+        const { newZone, deleteZone, newMandal, deleteMandal, all, allExecutives, newCustom, deleteCustom } = memberAttendees;
+        if (all) {
+            yield prisma.memberAttendees.update({
+                where: { id: meetId },
+                data: {
+                    all: true,
+                    customMembers: [],
+                    zones: [],
+                    mandals: [],
+                    allExecutives: false
+                }
             });
-            meetingAttendees = [...meetingAttendees, ...allMembers];
+        }
+        else if (allExecutives) {
+            yield prisma.memberAttendees.update({
+                where: { id: meetId },
+                data: {
+                    all: false,
+                    customMembers: { set: [] },
+                    zones: { set: [] },
+                    mandals: { set: [] },
+                    allExecutives: true
+                }
+            });
         }
         else {
-            if (attendees.memberAttendees.zone.length > 0) {
-                const zoneMembers = yield prisma.members.findMany({
+            if (deleteZone && deleteZone.length > 0) {
+                yield prisma.zone.deleteMany({
                     where: {
-                        zone: { in: attendees.memberAttendees.zone },
-                    },
-                    select: {
-                        membershipId: true,
+                        id: {
+                            in: deleteZone.map((item) => item),
+                        },
+                        meetId: meetId,
                     },
                 });
-                meetingAttendees = [...meetingAttendees, ...zoneMembers];
             }
-            else if (attendees.memberAttendees.custom.length > 0) {
-                const customMembers = yield prisma.members.findMany({
-                    where: {
-                        membershipId: { in: attendees.memberAttendees.custom },
+            if (newZone && newZone.length > 0) {
+                yield prisma.memberAttendees.create({
+                    zones: {
+                        create: newZone.map((item) => ({ zone: item }))
                     },
-                    select: {
-                        membershipId: true,
+                    where: { meetId: meetId }
+                });
+            }
+            if (deleteMandal && deleteMandal.length > 0) {
+                yield prisma.mandal.deleteMany({
+                    where: {
+                        id: {
+                            in: deleteMandal.map((item) => item),
+                        },
+                        meetId: meetId,
                     },
                 });
-                meetingAttendees = [...meetingAttendees, ...customMembers];
+            }
+            if (newMandal && newMandal.length > 0) {
+                yield prisma.memberAttendees.create({
+                    mandals: {
+                        create: newMandal.map((item) => ({ mandal: item }))
+                    },
+                    where: { meetId: meetId }
+                });
+            }
+            if (deleteCustom && deleteCustom.length > 0) {
+                yield prisma.customMember.deleteMany({
+                    where: {
+                        id: {
+                            in: deleteCustom.map((item) => item),
+                        },
+                        meetId: meetId,
+                    },
+                });
+            }
+            if (newCustom && newCustom.length > 0) {
+                yield prisma.memberAttendees.create({
+                    customMembers: {
+                        create: newCustom.map((item) => ({ membershipId: item }))
+                    },
+                    where: { meetId: meetId }
+                });
             }
         }
-        allAttendees["memberAttendees"] = yield prisma.meetingAttendees.createMany({
-            data: meetingAttendees.map((meetingAttendee) => ({
-                meetingId: meetingId,
-                memberId: meetingAttendee.membershipId,
-            })),
-        });
     }
-    if (attendees.vehicleAttendees) {
-        let meetingAttendees = [];
-        if (attendees.vehicleAttendees.all) {
-            const allVehicles = yield prisma.vehicles.findMany({
-                where: {
-                    isActive: "TRUE",
-                },
-                select: {
-                    vehicleId: true,
-                },
-            });
-            meetingAttendees = [...meetingAttendees, ...allVehicles];
-        }
-        else if (attendees.vehicleAttendees.custom.length > 0) {
-            const customVehicles = yield prisma.vehicles.findMany({
-                where: {
-                    vehicleId: { in: attendees.vehicleAttendees.custom },
-                },
-                select: {
-                    vehicleId: true,
-                },
-            });
-            meetingAttendees = [...meetingAttendees, ...customVehicles];
-        }
-        allAttendees["vehicleAttendees"] = yield prisma.meetingAttendees.createMany({
-            data: meetingAttendees.map((meetingAttendee) => ({
-                meetingId: meetingId,
-                vehicleId: meetingAttendee.vehicleId,
-            })),
-        });
-    }
-    if (attendees.labourAttendees) {
-        let meetingAttendees = [];
-        if (attendees.labourAttendees.all) {
-            const allLabours = yield prisma.labours.findMany({
-                where: {
-                    isActive: "TRUE",
-                },
-                select: {
-                    labourId: true,
-                },
-            });
-            meetingAttendees = [...meetingAttendees, ...allLabours];
-        }
-        else if (attendees.labourAttendees.membershipID.length > 0) {
-            const customLabours = yield prisma.labours.findMany({
-                where: {
-                    labourId: { in: attendees.labourAttendees.membershipID },
-                },
-                select: {
-                    labourId: true,
-                },
-            });
-            meetingAttendees = [...meetingAttendees, ...customLabours];
-        }
-        else if (attendees.labourAttendees.custom.length > 0) {
-            const customLabours = yield prisma.labours.findMany({
-                where: {
-                    labourId: { in: attendees.labourAttendees.custom },
-                },
-                select: {
-                    labourId: true,
-                },
-            });
-            meetingAttendees = [...meetingAttendees, ...customLabours];
-        }
-        allAttendees["labourAttendees"] = yield prisma.meetingAttendees.createMany({
-            data: meetingAttendees.map((meetingAttendee) => ({
-                meetingId: meetingId,
-                labourId: meetingAttendee.labourId,
-            })),
-        });
-    }
-    return allAttendees;
 });
-function calculateFieldDifferences(existing, incoming) {
-    const result = {};
-    for (const key in incoming) {
-        if (lodash_1.default.isEqual(existing[key], incoming[key]))
-            continue;
-        result[key] = incoming[key];
-    }
-    return result;
-}

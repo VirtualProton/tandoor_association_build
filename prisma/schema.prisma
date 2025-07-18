@@ -540,7 +540,7 @@ model Meetings {
 model FollowUpMeeting {
   id        String   @id @default(uuid())
   meetId    Int     @db.Int
-  dateTime  DateTime @unique @db.DateTime()
+  dateTime  DateTime @db.DateTime()
   createdAt DateTime @default(now())
   meeting   Meetings @relation("FollowUpMeetings", fields: [meetId], references: [id], onDelete: Cascade)
 
