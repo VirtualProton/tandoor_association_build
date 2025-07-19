@@ -2,7 +2,7 @@
 FROM node:20-alpine
 
 # Use latest Node.js LTS
-WORKDIR /dist
+WORKDIR /app
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
