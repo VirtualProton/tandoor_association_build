@@ -15,7 +15,7 @@ RUN npm install --production
 
 # Copy the rest of the application code
 COPY . .
-
+COPY .env .env
 # If using Prisma, generate the client
 RUN npx prisma generate
 
