@@ -58,7 +58,7 @@ const requestOTP = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         let user = yield __1.prismaClient.user.findFirst({ where: { phone } });
         const identifier = phone;
         if (!identifier) {
-            return next(new bad_request_1.BadRequestsException("Invalid Number", root_1.ErrorCode.INVALID_INPUT));
+            next(new bad_request_1.BadRequestsException("Invalid Number", root_1.ErrorCode.INVALID_INPUT));
         }
         if (!user) {
             return next(new bad_request_1.BadRequestsException("User not registered", root_1.ErrorCode.USER_NOT_FOUND));
