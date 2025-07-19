@@ -35,7 +35,7 @@ app.get('/', (req, res) => {
     res.send('API is working. CORS is enabled for all origins.');
 });
 app.use('/api', route_1.default);
-exports.redis = new ioredis_1.default();
+exports.redis = new ioredis_1.default(secrets_1.REDIS_URL);
 exports.prismaClient = new client_1.PrismaClient({
     log: ['query']
 });

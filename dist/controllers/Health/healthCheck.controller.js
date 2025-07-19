@@ -17,23 +17,11 @@ const client_1 = require("@prisma/client");
 const os_1 = __importDefault(require("os"));
 const diskusage_1 = __importDefault(require("diskusage"));
 const prisma = new client_1.PrismaClient();
-const ioredis_1 = __importDefault(require("ioredis"));
 const os_utils_1 = __importDefault(require("os-utils"));
-const redis = new ioredis_1.default(); // Connect to Redis server
-// redis.on("error", (err) => {
-//   console.error("Redis error:", err);
-// });
-// (async () => {
-//     try{
-//         await redis.connect();
-//         console.log("Connected to Redis server"); 
-//     }catch (error) {
-//         console.error("Error connecting to Redis server:", error);
-//     }
-//   })();
+const __1 = require("../..");
 const checkRedis = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const pong = yield redis.ping();
+        const pong = yield __1.redis.ping();
         return pong === "PONG" ? { ok: true, message: 'Redis connected' } : { ok: false, message: 'Redis ping failed' };
     }
     catch (error) {

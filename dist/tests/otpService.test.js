@@ -12,14 +12,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const __1 = require("..");
 const otp_service_1 = __importDefault(require("../services/otp/otp.service"));
-const ioredis_mock_1 = __importDefault(require("ioredis-mock"));
-globalThis.redis = new ioredis_mock_1.default(); // Use mock Redis instance
 describe('OTP Service', () => {
     const identifier = 'test@example.com';
     beforeEach(() => __awaiter(void 0, void 0, void 0, function* () {
         // Clear Redis before each test to avoid state leakage
-        yield globalThis.redis.flushall();
+        yield __1.redis.flushall();
     }));
     it('should generate and verify OTP successfully', () => __awaiter(void 0, void 0, void 0, function* () {
         const otp = yield otp_service_1.default.generateAndStoreOTP(identifier);
