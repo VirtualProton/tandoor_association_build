@@ -5,7 +5,7 @@ FROM node:20-alpine
 RUN apk add --no-cache python3 make g++ 
 
 # Use latest Node.js LTS
-WORKDIR /dist
+WORKDIR ./dist
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
