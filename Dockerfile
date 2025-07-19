@@ -1,6 +1,9 @@
 # Use latest Node.js LTS
 FROM node:20-alpine
 
+# Install dependencies for node-gyp (python3, make, g++, etc.)
+RUN apk add --no-cache python3 make g++ 
+
 # Use latest Node.js LTS
 WORKDIR /app
 
