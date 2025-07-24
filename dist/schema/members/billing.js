@@ -8,6 +8,7 @@ exports.MemberBillingHistorySchema = zod_1.z.object({
     toDate: zod_1.z.coerce.date(),
     totalAmount: zod_1.z.coerce.number().nonnegative().max(99999999.99).default(0.0),
     paidAmount: zod_1.z.coerce.number().nonnegative().max(99999999.99).default(0.0),
+    paymentDate: zod_1.z.coerce.date().optional(),
     notes: zod_1.z.string().optional(),
     receiptPath: zod_1.z.string().max(225).optional(),
 }).transform((data) => {

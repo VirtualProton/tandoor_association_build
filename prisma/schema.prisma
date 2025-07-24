@@ -100,6 +100,22 @@ model User {
   @@map("users")
 }
 
+
+model UscAssignmentHistory {
+  id                  Int       @id @default(autoincrement())
+  electricalUscNumber String    @db.VarChar(225)
+  membershipId        String      // Either memberId or branchId will be present
+  branchId            Int?
+  assignedAt          DateTime  @default(now())
+  unassignedAt        DateTime?
+
+  member             Members  @relation("UscAssignmentHistory",fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  branch               Branches? @relation("UscAssignmentHistory",fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@index([electricalUscNumber])
+  @@map("usc_assignment_history")
+}
+
 model Members {
   id                  Int              @id @default(autoincrement())
   membershipId        String           @unique @db.VarChar(225)
@@ -161,7 +177,7 @@ model Members {
   taxInvoice               TaxInvoice[]              @relation("TaxInvoice")
   LeaseQueryHistory        LeaseQueryHistory[]       @relation("LeaseQueryHistory")
   leaseQueryAttachments    LeaseQueryAttachments[]   @relation("LeaseQueryAttachments")
-
+  UscAssignmentHistory     UscAssignmentHistory[]    @relation("UscAssignmentHistory")
   @@index([id, membershipId, electricalUscNumber, scNumber])
   @@map("members")
 }
@@ -202,7 +218,7 @@ model MachineryInformations {
 model Branches {
   id                  Int      @id @default(autoincrement())
   membershipId        String   @db.VarChar(225)
-  electricalUscNumber String   @unique @db.VarChar(225)
+  electricalUscNumber String?   @unique @db.VarChar(225)
   scNumber            String   @unique @db.VarChar(225)
   proprietorType      String   @db.VarChar(50)
   proprietorStatus    String   @db.VarChar(50)
@@ -218,7 +234,7 @@ model Branches {
 
   members               Members                 @relation("Branches", fields: [membershipId], references: [membershipId], onDelete: Cascade)
   machineryInformations MachineryInformations[] @relation("BranchMachinery")
-
+  UscAssignmentHistory     UscAssignmentHistory[] @relation("UscAssignmentHistory")
   @@index([id, membershipId, electricalUscNumber, scNumber])
   @@map("branches")
 }
@@ -372,6 +388,7 @@ model MemberBillingHistory {
   paymentStatus paymentStatus @default(DUE) // e.g., SUCCESS, PENDING, FAILED
   notes         String?       @db.Text // Optional notes
   receiptPath   String?       @db.VarChar(225) // Path to the receipt
+  paymentDate   DateTime? @db.DateTime() // Date when the payment was made
   createdAt     DateTime      @default(now())
   modifiedAt    DateTime      @updatedAt
   createdBy     Int?          @db.Int

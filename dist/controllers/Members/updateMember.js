@@ -109,7 +109,25 @@ const updateMember = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
                         data: lodash_1.default.omit(Object.assign(Object.assign({}, memberData), { membershipId }), ['id'])
                     });
                 }
-            }), { timeout: 30000 } // timeout in milliseconds (e.g., 30 seconds)
+                if (memberData.electricalUscNumber) {
+                    yield prisma.uscAssignmentHistory.updateMany({
+                        where: {
+                            membershipId: membershipId,
+                            branchId: null,
+                            unassignedAt: null
+                        },
+                        data: {
+                            unassignedAt: new Date()
+                        }
+                    });
+                    yield prisma.uscAssignmentHistory.create({
+                        data: {
+                            membershipId: membershipId,
+                            electricalUscNumber: memberData.electricalUscNumber
+                        }
+                    });
+                }
+            }), { timeout: 60000 } // timeout in milliseconds (e.g., 60 seconds)
             );
             res.status(200).json({ data: memberUpdatedData, message: `Member ${membershipId} data updated successfully.` });
         }
@@ -203,6 +221,15 @@ const updateBranchDetails = (prisma, membershipId, branchDetails) => __awaiter(v
             const newBranch = yield prisma.branchDetails.create({
                 data: Object.assign({}, branchData)
             });
+            if (branchData.electricalUscNumber) {
+                yield prisma.uscAssignmentHistory.create({
+                    data: {
+                        membershipId,
+                        branchId: newBranch.id,
+                        electricalUscNumber: branchData.electricalUscNumber
+                    }
+                });
+            }
             if (machineryInformations && machineryInformations.length > 0) {
                 const machineryToAdd = machineryInformations.map((machinery) => (Object.assign(Object.assign({}, machinery), { branchId: newBranch.id })));
                 yield prisma.machineryInformations.createMany({
@@ -222,6 +249,24 @@ const updateBranchDetails = (prisma, membershipId, branchDetails) => __awaiter(v
                             in: deleteMachineryInformations || []
                         },
                         branchId: branch.id
+                    }
+                });
+            }
+            if (branchData.electricalUscNumber) {
+                yield prisma.uscAssignmentHistory.updateMany({
+                    where: {
+                        branchId: branch.id,
+                        unassignedAt: null
+                    },
+                    data: {
+                        unassignedAt: new Date()
+                    }
+                });
+                yield prisma.uscAssignmentHistory.create({
+                    data: {
+                        membershipId,
+                        branchId: branch.id,
+                        electricalUscNumber: branchData.electricalUscNumber
                     }
                 });
             }
