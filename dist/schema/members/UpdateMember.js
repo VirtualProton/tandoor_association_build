@@ -11,7 +11,7 @@ const BusinessType = zod_1.z.enum(["OWNED", "RENTED", "TRADER", "FACTORY_GIVEN_O
 const Bool = zod_1.z.enum(["TRUE", "FALSE"]);
 // Proposer Schema
 const Proposer = zod_1.z.object({
-    proposerId: zod_1.z.string().nullable().optional(),
+    proposerID: zod_1.z.string().nullable().optional(),
     signaturePath: zod_1.z.string().nullable().optional(),
 });
 // Machinery Info Schema
