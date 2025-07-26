@@ -15,7 +15,7 @@ const bad_request_1 = require("../../exceptions/bad-request");
 const root_1 = require("../../exceptions/root");
 const getMemberChanges = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { approvalStatus } = req.body;
+        const { approvalStatus } = req.params;
         const statusStr = approvalStatus === null || approvalStatus === void 0 ? void 0 : approvalStatus.toUpperCase();
         console.log("statusStr", statusStr);
         if (!req.user) {
