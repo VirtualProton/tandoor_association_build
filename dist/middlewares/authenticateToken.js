@@ -44,10 +44,10 @@ const authenticateToken = (req, res, next) => __awaiter(void 0, void 0, void 0, 
     }
     catch (err) {
         if (err instanceof jsonwebtoken_1.default.TokenExpiredError) {
-            next(new bad_request_1.BadRequestsException("Token expired", root_1.ErrorCode.TOKEN_EXPIRED));
+            return next(new bad_request_1.BadRequestsException("Token expired", root_1.ErrorCode.TOKEN_EXPIRED));
         }
         else if (err instanceof jsonwebtoken_1.default.JsonWebTokenError) {
-            next(new bad_request_1.BadRequestsException("Invalid token", root_1.ErrorCode.INVALID_TOKEN));
+            return next(new bad_request_1.BadRequestsException("Invalid token", root_1.ErrorCode.INVALID_TOKEN));
         }
         console.log(err);
         res.status(500).json({ message: "Internal Server Error" });
