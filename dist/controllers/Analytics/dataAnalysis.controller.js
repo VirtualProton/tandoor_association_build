@@ -307,7 +307,7 @@ const getDataAnalysis = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
         const vehicleDueAmount = totalVehiclesDueAmount._sum.balanceAmount ? Number(totalVehiclesDueAmount._sum.balanceAmount) : 0;
         const totalDueAmount = memberDueAmount + vehicleDueAmount;
         const collectionRate = totalCollectedAmount > 0 ? (totalCollectedAmount / totalRevenue) * 100 : 0;
-        return res.json({
+        return res.json(jsonifyBigInt({
             totalRevenue,
             totalCollectedAmount,
             collectionRate,
@@ -315,7 +315,7 @@ const getDataAnalysis = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
             members: yield getMemberStat(startDate, endDate),
             vehicles: yield vehicleStats(startDate, endDate),
             labours: yield labourStats(startDate, endDate),
-        });
+        }));
     }
     catch (err) {
         console.log(err);
@@ -323,3 +323,6 @@ const getDataAnalysis = (req, res, next) => __awaiter(void 0, void 0, void 0, fu
     }
 });
 exports.getDataAnalysis = getDataAnalysis;
+function jsonifyBigInt(obj) {
+    return JSON.parse(JSON.stringify(obj, (_, value) => typeof value === "bigint" ? value.toString() : value));
+}
