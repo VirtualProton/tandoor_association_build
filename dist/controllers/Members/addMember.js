@@ -262,7 +262,9 @@ const addMember = (req, res, next) => __awaiter(void 0, void 0, void 0, function
             const machineryInformations = yield addMachineryInformationsHandler(prisma, newMember.membershipId, memberDetails.machineryInformations);
             //Add branches
             const branches = yield addBranchesHandler(prisma, newMember.membershipId, memberDetails.branches);
-            const branchesUscAssignmentHistory = yield addUscAssignmentHistoryHandler(prisma, newMember.membershipId, branches, memberDetails.electricalUscNumber);
+            if (branches && branches.length == 0) {
+                const branchesUscAssignmentHistory = yield addUscAssignmentHistoryHandler(prisma, newMember.membershipId, branches, memberDetails.electricalUscNumber);
+            }
             //Add complianceDetails
             const complianceDetails = yield addComplianceDetailsHandler(prisma, newMember.membershipId, memberDetails.complianceDetails);
             //Add SimilarMembershipInquiry
