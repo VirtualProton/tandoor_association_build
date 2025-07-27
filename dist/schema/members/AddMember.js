@@ -16,6 +16,7 @@ const Proposer = zod_1.z.object({
 });
 const MachineryInformations = zod_1.z.object({
     machineName: zod_1.z.string().max(50),
+    isOther: Bool.optional().default("FALSE"), // Indicates if the machine is of other type
     machineCount: zod_1.z.number().int().default(0)
 });
 const PartnerDetails = zod_1.z.object({

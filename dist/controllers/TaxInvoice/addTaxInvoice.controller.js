@@ -29,23 +29,39 @@ const root_1 = require("../../exceptions/root");
 const addTaxInvoiceController = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const _a = addTaxInvoice_1.TaxInvoiceSchema.parse(req.body), { invoiceItem, invoiceId } = _a, taxInvoice = __rest(_a, ["invoiceItem", "invoiceId"]);
-        if (!["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
-            return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
+        if (["TSMWA_EDITOR", "TQMA_EDITOR"].includes(req.user.role)) {
+            const invoice = yield __1.prismaClient.taxInvoice.create({
+                data: Object.assign(Object.assign({ invoiceId: invoiceId ? invoiceId : yield (0, generateTaxInvoiceID_1.generateTaxInvoiceID)(__1.prismaClient) }, taxInvoice), { status: "PENDING", createdBy: req.user.userId, invoiceItems: {
+                        create: invoiceItem.map((item) => ({
+                            hsnCode: item.hsnCode,
+                            particular: item.particular,
+                            stoneCount: item.stoneCount,
+                            size: item.size,
+                            totalSqFeet: item.totalSqFeet,
+                            ratePerSqFeet: item.ratePerSqFeet,
+                            amount: item.amount,
+                        })),
+                    } }),
+            });
+            res.status(200).json({ message: "Tax invoice created successfully", invoice });
         }
-        const invoice = yield __1.prismaClient.taxInvoice.create({
-            data: Object.assign(Object.assign({ invoiceId: invoiceId ? invoiceId : yield (0, generateTaxInvoiceID_1.generateTaxInvoiceID)(__1.prismaClient) }, taxInvoice), { createdBy: req.user.userId, invoiceItems: {
-                    create: invoiceItem.map((item) => ({
-                        hsnCode: item.hsnCode,
-                        particular: item.particular,
-                        stoneCount: item.stoneCount,
-                        size: item.size,
-                        totalSqFeet: item.totalSqFeet,
-                        ratePerSqFeet: item.ratePerSqFeet,
-                        amount: item.amount,
-                    })),
-                } }),
-        });
-        res.status(200).json({ message: "Tax invoice created successfully", invoice });
+        if (req.user.role === "ADMIN") {
+            const invoice = yield __1.prismaClient.taxInvoice.create({
+                data: Object.assign(Object.assign({ invoiceId: invoiceId ? invoiceId : yield (0, generateTaxInvoiceID_1.generateTaxInvoiceID)(__1.prismaClient) }, taxInvoice), { status: "APPROVED", createdBy: req.user.userId, invoiceItems: {
+                        create: invoiceItem.map((item) => ({
+                            hsnCode: item.hsnCode,
+                            particular: item.particular,
+                            stoneCount: item.stoneCount,
+                            size: item.size,
+                            totalSqFeet: item.totalSqFeet,
+                            ratePerSqFeet: item.ratePerSqFeet,
+                            amount: item.amount,
+                        })),
+                    } }),
+            });
+            res.status(200).json({ message: "Tax invoice created successfully", invoice });
+        }
+        return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
     }
     catch (err) {
         return next(new bad_request_1.BadRequestsException(err.message, root_1.ErrorCode.BAD_REQUEST));

@@ -112,6 +112,7 @@ const getExecutiveMember = (req, res, next) => __awaiter(void 0, void 0, void 0,
                 proposer: true,
                 executiveProposer: true,
                 declarations: true,
+                UscAssignmentHistory: true
             },
         });
         console;

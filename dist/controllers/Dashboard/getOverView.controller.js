@@ -49,6 +49,16 @@ const getOverView = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
                 }
             }
         });
+        const vehiclePaymentsDue = yield __1.prismaClient.tripRecords.findMany({
+            where: {
+                paymentStatus: {
+                    in: ["UNPAID", "PARTIAL"]
+                }
+            },
+            orderBy: {
+                tripDate: "asc"
+            }
+        });
         const expiringLisences = yield __1.prismaClient.attachments.findMany({
             where: {
                 expiredAt: {
@@ -83,7 +93,8 @@ const getOverView = (req, res, next) => __awaiter(void 0, void 0, void 0, functi
                 total: totalVehicles,
                 active: activeVehicles,
                 maintenance: maintenanceVehicles,
-                inactive: inactiveVehicles
+                inactive: inactiveVehicles,
+                vehiclePaymentsDue
             },
             labour: {
                 total: totalLabour,

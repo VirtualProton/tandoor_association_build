@@ -2,12 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MemberBillingHistorySchema = void 0;
 const zod_1 = require("zod");
+const paymentMode = zod_1.z.enum(["CASH", "CHEQUE", "UPI", "CARD", "NET_BANKING"]);
 exports.MemberBillingHistorySchema = zod_1.z.object({
     membershipId: zod_1.z.string().max(225),
     fromDate: zod_1.z.coerce.date(),
     toDate: zod_1.z.coerce.date(),
     totalAmount: zod_1.z.coerce.number().nonnegative().max(99999999.99).default(0.0),
     paidAmount: zod_1.z.coerce.number().nonnegative().max(99999999.99).default(0.0),
+    paymentMode: paymentMode.default("CASH"),
     paymentDate: zod_1.z.coerce.date().optional(),
     notes: zod_1.z.string().optional(),
     receiptPath: zod_1.z.string().max(225).optional(),

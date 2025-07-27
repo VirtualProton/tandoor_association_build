@@ -31,6 +31,7 @@ const deleteInvoiceItemSchema = zod_1.z.object({
 // Full schema for TaxInvoice with nested invoice items
 exports.TaxInvoicePartialUpdateSchema = zod_1.z.object({
     invoiceId: zod_1.z.string().max(225),
+    status: zod_1.z.enum(["PENDING", "APPROVED", "DECLINED"]).optional(),
     membershipId: zod_1.z.string().max(225).optional(),
     invoiceDate: zod_1.z.coerce.date().optional(),
     cGSTInPercent: zod_1.z.number().int().optional(),

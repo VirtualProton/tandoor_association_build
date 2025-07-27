@@ -13,6 +13,7 @@ var __rest = (this && this.__rest) || function (s, e) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.billingPartialUpdateSchema = void 0;
 const zod_1 = require("zod");
+const paymentMode = zod_1.z.enum(["CASH", "CHEQUE", "UPI", "CARD", "NET_BANKING"]);
 exports.billingPartialUpdateSchema = zod_1.z.object({
     billingId: zod_1.z.string().max(225), // required
     membershipId: zod_1.z.string().max(225).optional(),
@@ -21,6 +22,7 @@ exports.billingPartialUpdateSchema = zod_1.z.object({
     paymentDate: zod_1.z.coerce.date().optional(),
     totalAmount: zod_1.z.coerce.number().nonnegative().max(99999999.99).optional(),
     paidAmount: zod_1.z.coerce.number().nonnegative().max(99999999.99).optional(),
+    paymentMode: paymentMode.optional(),
     notes: zod_1.z.string().optional(),
     receiptPath: zod_1.z.string().max(225).optional(),
 }).refine((data) => {

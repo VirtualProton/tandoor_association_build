@@ -11,7 +11,10 @@ const getPendingChanges_controller_1 = require("../controllers/Members/getPendin
 const memberApproval_controller_1 = require("../controllers/Members/memberApproval.controller");
 const generateBill_controller_1 = require("../controllers/Bill/generateBill.controller");
 const deleteMember_controller_1 = require("../controllers/Members/deleteMember.controller");
+const electricalUscNumber_1 = require("../controllers/Members/electricalUscNumber");
 const memberRoutes = (0, express_1.Router)();
+memberRoutes.get('/get_usc_history', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(electricalUscNumber_1.getUscAssignmentHistory));
+memberRoutes.get('/get_members', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getMember_1.getAllMember));
 memberRoutes.get('/get_members', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getMember_1.getAllMember));
 memberRoutes.get('/get_executive_members', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getMember_1.getExecutiveMember));
 memberRoutes.get('/get_valid_members', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getMember_1.getValidMember));

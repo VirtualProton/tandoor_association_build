@@ -17,11 +17,13 @@ const Proposer = zod_1.z.object({
 // Machinery Info Schema
 const newMachineryInformations = zod_1.z.object({
     machineName: zod_1.z.string().max(50),
+    isOther: Bool.optional().default("FALSE"), // Indicates if the machine is of other type
     machineCount: zod_1.z.number().int().default(0)
 });
 const updateMachineryInformations = zod_1.z.object({
     id: zod_1.z.number(),
     machineName: zod_1.z.string().max(50).optional(),
+    isOther: Bool.optional(), // Indicates if the machine is of other type
     machineCount: zod_1.z.number().int().optional(),
 }).refine((data) => data.machineName !== undefined ||
     data.machineCount !== undefined, { message: "At least one field (other than id) must be provided for Machinary update." });
