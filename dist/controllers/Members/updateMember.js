@@ -274,7 +274,7 @@ const updateBranchDetails = (prisma, membershipId, branchDetails) => __awaiter(v
                 yield Promise.all(machineryUpdates.map((update) => prisma.machineryInformations.update(update)));
             }
             if (branch && branch.electricalUscNumber) {
-                const oldBranchData = yield prisma.branchDetails.findUnique({
+                const oldBranchData = yield prisma.branches.findUnique({
                     where: {
                         id: branch.id
                     },
