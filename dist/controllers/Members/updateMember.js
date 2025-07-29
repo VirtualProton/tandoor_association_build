@@ -273,30 +273,40 @@ const updateBranchDetails = (prisma, membershipId, branchDetails) => __awaiter(v
                 }));
                 yield Promise.all(machineryUpdates.map((update) => prisma.machineryInformations.update(update)));
             }
+            if (branch && branch.electricalUscNumber) {
+                const oldBranchData = yield prisma.branchDetails.findUnique({
+                    where: {
+                        id: branch.id
+                    },
+                    select: {
+                        electricalUscNumber: true
+                    }
+                });
+                if (oldBranchData.electricalUscNumber !== branch.electricalUscNumber) {
+                    yield prisma.uscAssignmentHistory.updateMany({
+                        where: {
+                            branchId: branch.id,
+                            unassignedAt: null
+                        },
+                        data: {
+                            unassignedAt: new Date()
+                        }
+                    });
+                    yield prisma.uscAssignmentHistory.create({
+                        data: {
+                            membershipId,
+                            branchId: branch.id,
+                            electricalUscNumber: branchData.electricalUscNumber
+                        }
+                    });
+                }
+            }
             yield prisma.branches.update({
                 where: {
                     id: branch.id,
                 },
                 data: lodash_1.default.omit(Object.assign(Object.assign({}, branchData), { membershipId }), ['id'])
             });
-            if (branch && branch.electricalUscNumber) {
-                yield prisma.uscAssignmentHistory.updateMany({
-                    where: {
-                        branchId: branch.id,
-                        unassignedAt: null
-                    },
-                    data: {
-                        unassignedAt: new Date()
-                    }
-                });
-                yield prisma.uscAssignmentHistory.create({
-                    data: {
-                        membershipId,
-                        branchId: branch.id,
-                        electricalUscNumber: branchData.electricalUscNumber
-                    }
-                });
-            }
         }
     }
 });
