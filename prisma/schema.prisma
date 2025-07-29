@@ -203,6 +203,7 @@ model MachineryInformations {
   membershipId String?  @db.VarChar(225)
   branchId     Int?     @db.Int // Reference to Branches
   machineName  String   @db.VarChar(50)
+  isOther       Bool @default(FALSE) // Indicates if the machine is of other type
   machineCount Int      @default(0)
   createdAt    DateTime @default(now())
   modifiedAt   DateTime @updatedAt
@@ -386,6 +387,7 @@ model MemberBillingHistory {
   paidAmount    Decimal       @db.Decimal(10, 2) // Amount paid
   dueAmount     Decimal       @db.Decimal(10, 2) // Amount due
   paymentStatus paymentStatus @default(DUE) // e.g., SUCCESS, PENDING, FAILED
+  paymentMode  paymentMode   @default(CASH) // e.g., CASH, CHEQUE, ONLINE
   notes         String?       @db.Text // Optional notes
   receiptPath   String?       @db.VarChar(225) // Path to the receipt
   paymentDate   DateTime? @db.DateTime() // Date when the payment was made
@@ -720,37 +722,11 @@ model LeaseQueryHistory {
   members         Members?   @relation("LeaseQueryHistory", fields: [membershipId], references: [membershipId], onDelete: Cascade)
 }
 
-// model TaxInvoice {
-//   id            Int      @id @default(autoincrement())
-//   invoiceId     String   @unique @db.VarChar(225)
-//   membershipId  String   @db.VarChar(225)
-//   invoiceDate   DateTime
-//   hsnCode       String   @db.VarChar(225)
-//   particular    String   @db.Text
-//   stoneCount    Int      @db.Int
-//   size          Decimal  @db.Decimal(10, 2)
-//   totalSqFeet   Decimal  @db.Decimal(10, 2)
-//   ratePerSqFeet Decimal  @db.Decimal(10, 2)
-//   amount        Decimal  @db.Decimal(10, 2)
-//   cGSTInPercent Int      @db.Int
-//   sGSTInPercent Int      @db.Int
-//   iGSTInPercent Int      @db.Int
-//   subTotal      Decimal  @db.Decimal(10, 2)
-//   total         Decimal  @db.Decimal(10, 2)
 
-//   createdAt    DateTime @default(now())
-//   modifiedAt   DateTime @updatedAt
-//   createdBy    Int?     @db.Int
-//   modifiedBy   Int?     @db.Int
-//   userCreated  User?    @relation("TaxInvoiceCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-//   userModified User?    @relation("TaxInvoiceModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
-//   members      Members  @relation("TaxInvoice", fields: [membershipId], references: [membershipId], onDelete: Cascade)
-
-//   @@map("tax_invoice")
-// }
 
 model TaxInvoice {
   id            Int           @id @default(autoincrement())
+  status        ApprovalStatus        @default(PENDING)
   invoiceId     String        @unique @db.VarChar(225)
   membershipId  String        @db.VarChar(225)
   invoiceDate   DateTime
@@ -903,4 +879,13 @@ enum labourStatus {
   ACTIVE
   INACTIVE
   ON_BENCH
+}
+
+
+enum paymentMode{
+  CASH
+  CHEQUE
+  UPI
+  CARD
+  NET_BANKING
 }
