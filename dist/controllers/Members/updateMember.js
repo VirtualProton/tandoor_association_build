@@ -57,8 +57,8 @@ const updateMember = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
                     yield updateBranchDetails(prisma, membershipId, branchDetails);
                 }
                 if (attachments) {
-                    console.log("Updating attachments for membershipId:", membershipId);
-                    console.log("Attachments data:", attachments);
+                    // console.log("Updating attachments for membershipId:", membershipId);
+                    // console.log("Attachments data:", attachments);
                     yield updateAttachments(prisma, membershipId, attachments);
                 }
                 if (complianceDetails) {
@@ -159,7 +159,7 @@ const updatePartnerDetails = (prisma, membershipId, PartnerDetails) => __awaiter
     }
     if (PartnerDetails.newPartnerDetails && PartnerDetails.newPartnerDetails.length > 0) {
         const partnerDetailsToAdd = PartnerDetails.newPartnerDetails.map((partner) => (Object.assign({ membershipId }, partner)));
-        console.log("Adding partner details:", partnerDetailsToAdd);
+        // console.log("Adding partner details:", partnerDetailsToAdd);
         yield prisma.partnerDetails.createMany({
             data: partnerDetailsToAdd,
             skipDuplicates: true // This will skip duplicate entries based on unique constraints
@@ -205,18 +205,21 @@ const updateMachineryInformations = (prisma, membershipId, machineryInformations
     }
 });
 const updateBranchDetails = (prisma, membershipId, branchDetails) => __awaiter(void 0, void 0, void 0, function* () {
-    if (branchDetails.deleteBranchDetails && branchDetails.deleteBranchDetails.length > 0) {
+    // console.log("Branch details to update:", branchDetails);
+    //delete branch details
+    if (branchDetails.deleteBranchSchema && branchDetails.deleteBranchSchema.length > 0) {
         yield prisma.branchDetails.deleteMany({
             where: {
                 id: {
-                    in: branchDetails.deleteBranchDetails.map((branch) => branch.id)
+                    in: branchDetails.deleteBranchSchema.map((branch) => branch.id)
                 },
                 membershipId: membershipId
             }
         });
     }
-    if (branchDetails.newBranchDetails && branchDetails.newBranchDetails.length > 0) {
-        for (const branch of branchDetails.newBranchDetails) {
+    //create new branch details
+    if (branchDetails.newBranchSchema && branchDetails.newBranchSchema.length > 0) {
+        for (const branch of branchDetails.newBranchSchema) {
             const { machineryInformations } = branch, branchData = __rest(branch, ["machineryInformations"]);
             const newBranch = yield prisma.branchDetails.create({
                 data: Object.assign({}, branchData)
@@ -237,9 +240,12 @@ const updateBranchDetails = (prisma, membershipId, branchDetails) => __awaiter(v
             }
         }
     }
-    if (branchDetails.updateBranchDetails && branchDetails.updateBranchDetails.length > 0) {
-        for (const branch of branchDetails.updateBranchDetails) {
+    //update existing branch details
+    if (branchDetails.updateBranchSchema && branchDetails.updateBranchSchema.length > 0) {
+        for (const branch of branchDetails.updateBranchSchema) {
             const { newMachineryInformations, updateMachineryInformations, deleteMachineryInformations } = branch, branchData = __rest(branch, ["newMachineryInformations", "updateMachineryInformations", "deleteMachineryInformations"]);
+            // console.log("branch",branch);
+            // console.log("branch data",branchData);
             if (deleteMachineryInformations && deleteMachineryInformations.length > 0) {
                 yield prisma.machineryInformations.deleteMany({
                     where: {
@@ -296,7 +302,7 @@ const updateBranchDetails = (prisma, membershipId, branchDetails) => __awaiter(v
 });
 const updateAttachments = (prisma, membershipId, attachments) => __awaiter(void 0, void 0, void 0, function* () {
     const { deleteAttachments, newAttachments, updateAttachments } = attachments;
-    console.log("Attachments to update:", attachments);
+    // console.log("Attachments to update:", attachments);
     if (deleteAttachments && deleteAttachments.length > 0) {
         const attachDelete = yield prisma.attachments.deleteMany({
             where: {
@@ -307,7 +313,7 @@ const updateAttachments = (prisma, membershipId, attachments) => __awaiter(void 
             }
         });
     }
-    console.log("Attachments to delete:", deleteAttachments);
+    // console.log("Attachments to delete:", deleteAttachments);
     if (newAttachments && newAttachments.length > 0) {
         const attachmentsToAdd = newAttachments.map((attachment) => (Object.assign({ membershipId }, attachment)));
         yield prisma.attachments.createMany({
