@@ -262,9 +262,6 @@ const addMember = (req, res, next) => __awaiter(void 0, void 0, void 0, function
             const machineryInformations = yield addMachineryInformationsHandler(prisma, newMember.membershipId, memberDetails.machineryInformations);
             //Add branches
             const branches = yield addBranchesHandler(prisma, newMember.membershipId, memberDetails.branches);
-            if (branches && branches.length == 0) {
-                const branchesUscAssignmentHistory = yield addUscAssignmentHistoryHandler(prisma, newMember.membershipId, branches, memberDetails.electricalUscNumber);
-            }
             //Add complianceDetails
             const complianceDetails = yield addComplianceDetailsHandler(prisma, newMember.membershipId, memberDetails.complianceDetails);
             //Add SimilarMembershipInquiry
@@ -372,16 +369,18 @@ const addBranchesHandler = (prisma, membershipId, branches) => __awaiter(void 0,
                 placeOfBusiness: branch.placeOfBusiness,
             },
         });
+        // console.log("branch created", newBranch);
+        const branchesUscAssignmentHistory = yield addUscAssignmentHistoryHandler(prisma, membershipId, newBranch.id, branch.electricalUscNumber);
         const machineryData = branch.machineryInformations.map((machine) => ({
             // membershipId,
             branchId: newBranch.id,
             machineName: machine.machineName,
             machineCount: machine.machineCount,
         }));
-        const createdMachineries = yield prisma.machineryInformations.createMany({
-            data: machineryData,
-        });
-        return Object.assign(Object.assign({}, newBranch), { machineryInformations: machineryData });
+        // const createdMachineries = await prisma.machineryInformations.createMany({
+        //   data: machineryData,
+        // });
+        return Object.assign(Object.assign({}, newBranch), { machineryInformations: machineryData, branchesUscAssignmentHistory: branchesUscAssignmentHistory });
     })));
 });
 const addComplianceDetailsHandler = (prisma, membershipId, complianceDetails) => __awaiter(void 0, void 0, void 0, function* () {
@@ -448,22 +447,12 @@ const addPartnerDetailsHandler = (prisma, membershipId, partnerDetails) => __awa
         });
     })));
 });
-const addUscAssignmentHistoryHandler = (prisma, membershipId, branchIds, electricalUscNumber) => __awaiter(void 0, void 0, void 0, function* () {
-    if (branchIds == null || branchIds == undefined) {
-        return yield prisma.uscAssignmentHistory.create({
-            data: {
-                membershipId,
-                electricalUscNumber,
-            },
-        });
-    }
-    if (branchIds && branchIds.length > 0) {
-        return yield prisma.uscAssignmentHistory.createMany({
-            data: branchIds.map((branchId) => ({
-                membershipId,
-                branchId: branchId,
-                electricalUscNumber,
-            })),
-        });
-    }
+const addUscAssignmentHistoryHandler = (prisma, membershipId, branchId, electricalUscNumber) => __awaiter(void 0, void 0, void 0, function* () {
+    return yield prisma.uscAssignmentHistory.create({
+        data: {
+            membershipId,
+            branchId: branchId ? branchId : null,
+            electricalUscNumber,
+        },
+    });
 });
