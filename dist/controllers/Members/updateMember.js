@@ -205,10 +205,10 @@ const updateMachineryInformations = (prisma, membershipId, machineryInformations
     }
 });
 const updateBranchDetails = (prisma, membershipId, branchDetails) => __awaiter(void 0, void 0, void 0, function* () {
-    // console.log("Branch details to update:", branchDetails);
+    console.log("Branch details to update:", branchDetails);
     //delete branch details
     if (branchDetails.deleteBranchSchema && branchDetails.deleteBranchSchema.length > 0) {
-        yield prisma.branchDetails.deleteMany({
+        yield prisma.branches.deleteMany({
             where: {
                 id: {
                     in: branchDetails.deleteBranchSchema.map((branch) => branch.id)
@@ -220,9 +220,10 @@ const updateBranchDetails = (prisma, membershipId, branchDetails) => __awaiter(v
     //create new branch details
     if (branchDetails.newBranchSchema && branchDetails.newBranchSchema.length > 0) {
         for (const branch of branchDetails.newBranchSchema) {
+            console.log("Creating new branch:", branch);
             const { machineryInformations } = branch, branchData = __rest(branch, ["machineryInformations"]);
-            const newBranch = yield prisma.branchDetails.create({
-                data: Object.assign({}, branchData)
+            const newBranch = yield prisma.branches.create({
+                data: Object.assign(Object.assign({}, branchData), { membershipId })
             });
             yield prisma.uscAssignmentHistory.create({
                 data: {
