@@ -132,13 +132,17 @@ const ComplianceDetails = zod_1.z.object({
 // Similar Membership Inquiry
 const SimilarMembershipInquiry = zod_1.z.object({
     is_member_of_similar_org: Bool.optional(),
+    org_details: zod_1.z.string().max(225).optional(),
     has_applied_earlier: Bool.optional(),
+    previous_application_details: zod_1.z.string().max(225).optional(),
     is_valid_member: Bool.optional(),
     is_executive_member: Bool.optional(),
 }).refine((data) => data.is_member_of_similar_org !== undefined ||
     data.has_applied_earlier !== undefined ||
     data.is_valid_member !== undefined ||
-    data.is_executive_member !== undefined, { message: "At least one field must be provided for SimilarMembershipInquiry update." });
+    data.is_executive_member !== undefined ||
+    data.org_details !== undefined ||
+    data.previous_application_details !== undefined, { message: "At least one field must be provided for SimilarMembershipInquiry update." });
 // Attachments Schema
 const newAttachments = zod_1.z.object({
     documentName: zod_1.z.string().max(50),

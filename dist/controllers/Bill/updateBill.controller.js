@@ -20,7 +20,7 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateBill = void 0;
+exports.pendingUpdateBill = exports.updateBill = void 0;
 const __1 = require("../..");
 const bad_request_1 = require("../../exceptions/bad-request");
 const root_1 = require("../../exceptions/root");
@@ -28,39 +28,118 @@ const updateBilling_1 = require("../../schema/members/updateBilling");
 const updateBill = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const updateBillDetails = updateBilling_1.billingPartialUpdateSchema.parse(req.body);
+        const { billingId } = updateBillDetails, updatedBill = __rest(updateBillDetails, ["billingId"]);
         if (!["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
             return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
         }
-        // Import the enum type from Prisma client
-        const { billingId } = updateBillDetails, updatedBill = __rest(updateBillDetails, ["billingId"]);
-        const createBill = yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
-            yield prisma.memberBillingHistory.update({
-                where: {
-                    billingId
-                },
-                data: Object.assign({}, updatedBill)
-            });
-            const updateBill = yield prisma.memberBillingHistory.findUniqueOrThrow({
-                where: {
-                    billingId
-                }
-            });
-            const dueAmount = updateBill.totalAmount - updateBill.paidAmount;
-            const paymentStatus = updateBill.paidAmount === 0 ? "DUE" : updateBill.paidAmount < updateBill.totalAmount ? "PARTIAL" : "PAID";
-            yield prisma.memberBillingHistory.update({
-                where: {
-                    billingId
-                },
+        if (["TSMWA_EDITOR", "TQMA_EDITOR"].includes(req.user.role)) {
+            const pendingChanges = yield __1.prismaClient.memberBillingPendingChanges.create({
                 data: {
-                    dueAmount,
-                    paymentStatus
+                    billingId: updateBillDetails.billingId,
+                    updatedData: updateBillDetails,
+                    modifiedBy: req.user.userId
                 }
             });
-        }));
-        return res.json({ message: `Bill ${billingId} updated successfully` });
+            return res.json({ message: `Bill ${billingId} submitted for approval` });
+        }
+        if (["ADMIN"].includes(req.user.role)) {
+            const createBill = yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
+                yield __1.prismaClient.memberBillingPendingChanges.create({
+                    data: {
+                        billingId: updateBillDetails.billingId,
+                        updatedData: updateBillDetails,
+                        modifiedBy: req.user.userId,
+                        approvalStatus: "APPROVED",
+                        note: "modified by admin",
+                        approvedOrDeclinedBy: req.user.userId
+                    }
+                });
+                yield prisma.memberBillingHistory.update({
+                    where: {
+                        billingId
+                    },
+                    data: Object.assign({}, updatedBill)
+                });
+                const updateBill = yield prisma.memberBillingHistory.findUniqueOrThrow({
+                    where: {
+                        billingId
+                    }
+                });
+                const dueAmount = updateBill.totalAmount - updateBill.paidAmount;
+                const paymentStatus = updateBill.paidAmount === 0 ? "DUE" : updateBill.paidAmount < updateBill.totalAmount ? "PARTIAL" : "PAID";
+                yield prisma.memberBillingHistory.update({
+                    where: {
+                        billingId
+                    },
+                    data: {
+                        dueAmount,
+                        paymentStatus
+                    }
+                });
+            }));
+            return res.json({ message: `Bill ${billingId} updated successfully` });
+        }
     }
     catch (err) {
         return next(new bad_request_1.BadRequestsException(err.message, root_1.ErrorCode.BAD_REQUEST));
     }
 });
 exports.updateBill = updateBill;
+const pendingUpdateBill = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id, approvalStatus, note } = req.body;
+        const status = (approvalStatus || "").toUpperCase();
+        if (!["APPROVED", "DECLINED"].includes(status)) {
+            return next(new bad_request_1.BadRequestsException("Invalid approvalStatus", root_1.ErrorCode.INVALID_INPUT));
+        }
+        if (["ADMIN"].includes(req.user.role)) {
+            yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
+                const pendingChanges = yield prisma.memberBillingPendingChanges.findFirst({
+                    where: { id }
+                });
+                if (!pendingChanges) {
+                    return next(new bad_request_1.BadRequestsException("No records found for the provided ID", root_1.ErrorCode.NOT_FOUND));
+                }
+                yield prisma.memberBillingPendingChanges.update({
+                    where: {
+                        id
+                    },
+                    data: {
+                        approvalStatus: status, note, approvedOrDeclinedBy: req.user.userId
+                    }
+                });
+                if (status === "APPROVED") {
+                    const _a = pendingChanges === null || pendingChanges === void 0 ? void 0 : pendingChanges.updatedData, { billingId } = _a, updatedData = __rest(_a, ["billingId"]);
+                    yield prisma.memberBillingHistory.update({
+                        where: {
+                            billingId
+                        },
+                        data: Object.assign({ userModified: pendingChanges.modifiedBy }, updatedData)
+                    });
+                    const updateBill = yield prisma.memberBillingHistory.findUniqueOrThrow({
+                        where: {
+                            billingId
+                        }
+                    });
+                    const dueAmount = updateBill.totalAmount - updateBill.paidAmount;
+                    const paymentStatus = updateBill.paidAmount === 0 ? "DUE" : updateBill.paidAmount < updateBill.totalAmount ? "PARTIAL" : "PAID";
+                    yield prisma.memberBillingHistory.update({
+                        where: {
+                            billingId
+                        },
+                        data: {
+                            dueAmount,
+                            paymentStatus
+                        }
+                    });
+                }
+            }));
+            return res.json({ message: `Update request approved successfully` });
+        }
+        return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
+    }
+    catch (err) {
+        return next(new bad_request_1.BadRequestsException(err.message, root_1.ErrorCode.BAD_REQUEST));
+    }
+});
+exports.pendingUpdateBill = pendingUpdateBill;

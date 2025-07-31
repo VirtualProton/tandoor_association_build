@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getBillSummary = exports.getFilteredBills = exports.getBillById = exports.getBill = void 0;
+exports.getAllUpdateRequest = exports.getBillSummary = exports.getFilteredBills = exports.getBillById = exports.getBill = void 0;
 const __1 = require("../..");
 const bad_request_1 = require("../../exceptions/bad-request");
 const root_1 = require("../../exceptions/root");
@@ -189,3 +189,16 @@ const getBillSummary = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.getBillSummary = getBillSummary;
+const getAllUpdateRequest = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
+            return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
+        }
+        const pendingRequest = __1.prismaClient.memberBillingPendingChanges.findMany();
+        return res.status(200).json({ pendingRequest });
+    }
+    catch (err) {
+        return next(new bad_request_1.BadRequestsException(err.message, root_1.ErrorCode.BAD_REQUEST));
+    }
+});
+exports.getAllUpdateRequest = getAllUpdateRequest;
