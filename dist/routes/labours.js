@@ -14,6 +14,7 @@ labourRoutes.get('/get_all_active_labours', authenticateToken_1.authenticateToke
 labourRoutes.get('/get_all_inactive_labours', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getLabour_1.getAllInactiveLabours));
 labourRoutes.get('/get_all_benched_labours', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getLabour_1.getAllBenchedLabours));
 labourRoutes.get('/get_labour_id/:labourId', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getLabour_1.getLabourById));
+labourRoutes.get('/get_all_labours', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getLabour_1.getAllLabours));
 labourRoutes.delete('/delete_labour/:labourId', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(deleteLabour_1.deleteLabour));
 labourRoutes.post('/add_labour', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(addLabour_1.addLabour));
 labourRoutes.post('/update_labour', authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(updateLabour_1.updateLabour));

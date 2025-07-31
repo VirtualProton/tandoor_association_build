@@ -9,12 +9,44 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getLabourById = exports.getAllBenchedLabours = exports.getAllInactiveLabours = exports.getAllActiveLabours = void 0;
+exports.getLabourById = exports.getAllBenchedLabours = exports.getAllInactiveLabours = exports.getAllActiveLabours = exports.getAllLabours = void 0;
 const client_1 = require("@prisma/client");
 const __1 = require("../..");
 const bad_request_1 = require("../../exceptions/bad-request");
 const root_1 = require("../../exceptions/root");
 const prisma = new client_1.PrismaClient();
+const getAllLabours = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (![
+            "ADMIN",
+            "ADMIN_VIEWER",
+            "TSMWA_EDITOR",
+            "TSMWA_VIEWER",
+            "TQMA_EDITOR",
+            "TQMA_VIEWER",
+        ].includes(req.user.role)) {
+            return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
+        }
+        const allLabours = yield __1.prismaClient.labours.findMany({
+            include: {
+                laboursAdditionalDocs: true,
+                LabourHistory: true,
+                labourAssignedTo: {
+                    select: {
+                        membershipId: true,
+                        firmName: true,
+                    },
+                },
+            },
+        });
+        res.status(200).json(allLabours);
+    }
+    catch (error) {
+        console.error("Error fetching active labours:", error);
+        next(new bad_request_1.BadRequestsException("Failed to fetch labours", root_1.ErrorCode.SERVER_ERROR));
+    }
+});
+exports.getAllLabours = getAllLabours;
 const getAllActiveLabours = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         if (![
