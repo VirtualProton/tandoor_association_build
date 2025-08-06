@@ -13,6 +13,8 @@ taxInvoiceRoutes.get("/get_tax_invoice", authenticateToken_1.authenticateToken, 
 taxInvoiceRoutes.get("/get_tax_invoice_id/:invoiceId", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getTaxInvoice_controller_1.getTaxInvoiceByID));
 taxInvoiceRoutes.get("/get_tax_invoice_member/:membershipId", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getTaxInvoice_controller_1.getTaxInvoiceByID));
 taxInvoiceRoutes.get("/get_pending_invoice", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getPendingInvoice_controller_1.getPendingInvoice));
+taxInvoiceRoutes.get("/get_update_request/:status", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(getPendingInvoice_controller_1.getInvoiceChangeRequests));
+taxInvoiceRoutes.post("/approve_decline_request", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(updateTaxInvoice_controller_1.handleInvoiceUpdateRequest));
 taxInvoiceRoutes.delete("/delete_tax_invoice/:invoiceId", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(deleteTaxInvoice_controller_1.deleteTaxInvoice));
 taxInvoiceRoutes.post("/add_tax_invoice", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(addTaxInvoice_controller_1.addTaxInvoiceController));
 taxInvoiceRoutes.post("/update_tax_invoice", authenticateToken_1.authenticateToken, (0, error_handler_1.errorHandler)(updateTaxInvoice_controller_1.updateTaxInvoice));

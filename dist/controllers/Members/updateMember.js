@@ -251,7 +251,7 @@ const updateBranchDetails = (prisma, membershipId, branchDetails) => __awaiter(v
                 yield prisma.machineryInformations.deleteMany({
                     where: {
                         id: {
-                            in: deleteMachineryInformations || []
+                            in: deleteMachineryInformations.map((machinery) => machinery.id)
                         },
                         branchId: branch.id
                     }

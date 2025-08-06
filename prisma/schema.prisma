@@ -92,11 +92,15 @@ model User {
   leaseQueryModifiedBy           LeaseQuery[]                  @relation("LeaseQueryModifiedBy")
   leaseQueryCreatedBy            LeaseQuery[]                  @relation("LeaseQueryCreatedBy")
   taxInvoiceCreatedBy            TaxInvoice[]                  @relation("TaxInvoiceCreatedBy")
-  taxInvoiceModifiedBy           TaxInvoice[]                  @relation("TaxInvoiceModifiedBy")
+  // taxInvoiceModifiedBy           TaxInvoice[]                  @relation("TaxInvoiceModifiedBy")
+  InvoiceModifiedBy              InvoicePendingChanges[]       @relation("TaxInvoiceModifiedBy")
+  InvoiceChangesApprovedBy       InvoicePendingChanges[]       @relation("InvoiceChangesApprovedBy")
   memberBillingChangesApprovedBy MemberBillingPendingChanges[] @relation("billingChangesApprovedBy")
-  memberBillingChangesModifiedBy     MemberBillingPendingChanges[] @relation("billingChangesModifiedBy")
+  memberBillingChangesModifiedBy MemberBillingPendingChanges[] @relation("billingChangesModifiedBy")
   tripRecordsCreatedBy           TripRecords[]                 @relation("TripRecordsCreatedBy")
   tripRecordsModifiedBy          TripRecords[]                 @relation("TripRecordsModifiedBy")
+
+  InvoicePendingChanges InvoicePendingChanges[]
 
   @@map("users")
 }
@@ -410,7 +414,7 @@ model MemberBillingHistory {
 }
 
 model MemberBillingPendingChanges {
-  id             Int                           @id @default(autoincrement())
+  id                   Int            @id @default(autoincrement())
   billingId            String
   approvalStatus       ApprovalStatus @default(PENDING)
   approvedOrDeclinedBy Int?           @db.Int
@@ -421,7 +425,7 @@ model MemberBillingPendingChanges {
 
   memberBillingHistory MemberBillingHistory @relation("MemberBillingPendingChanges", fields: [billingId], references: [billingId], onDelete: Cascade)
   approvedByAdmin      User?                @relation("billingChangesApprovedBy", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
-  modifiedByEditor User    @relation("billingChangesModifiedBy", fields: [modifiedBy], references: [id], onDelete: Cascade)
+  modifiedByEditor     User                 @relation("billingChangesModifiedBy", fields: [modifiedBy], references: [id], onDelete: Cascade)
 
   @@map("member_billing_pending_changes")
 }
@@ -749,24 +753,25 @@ model LeaseQueryHistory {
 }
 
 model TaxInvoice {
-  id            Int            @id @default(autoincrement())
-  status        ApprovalStatus @default(PENDING)
-  invoiceId     String         @unique @db.VarChar(225)
-  membershipId  String         @db.VarChar(225)
-  invoiceDate   DateTime
-  cGSTInPercent Int            @db.Int
-  sGSTInPercent Int            @db.Int
-  iGSTInPercent Int            @db.Int
-  subTotal      Decimal        @db.Decimal(10, 2)
-  total         Decimal        @db.Decimal(10, 2)
-  createdAt     DateTime       @default(now())
-  modifiedAt    DateTime       @updatedAt
-  createdBy     Int?           @db.Int
-  modifiedBy    Int?           @db.Int
-  invoiceItems  InvoiceItem[]  @relation("TaxInvoiceItems")
-  userCreated   User?          @relation("TaxInvoiceCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  userModified  User?          @relation("TaxInvoiceModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
-  members       Members        @relation("TaxInvoice", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  id                    Int                     @id @default(autoincrement())
+  status                ApprovalStatus          @default(PENDING)
+  invoiceId             String                  @unique @db.VarChar(225)
+  membershipId          String                  @db.VarChar(225)
+  invoiceDate           DateTime
+  cGSTInPercent         Int                     @db.Int
+  sGSTInPercent         Int                     @db.Int
+  iGSTInPercent         Int                     @db.Int
+  subTotal              Decimal                 @db.Decimal(10, 2)
+  total                 Decimal                 @db.Decimal(10, 2)
+  createdAt             DateTime                @default(now())
+  modifiedAt            DateTime                @updatedAt
+  createdBy             Int?                    @db.Int
+  modifiedBy            Int?                    @db.Int
+  invoiceItems          InvoiceItem[]           @relation("TaxInvoiceItems")
+  userCreated           User?                   @relation("TaxInvoiceCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  // userModified  User?          @relation("TaxInvoiceModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
+  members               Members                 @relation("TaxInvoice", fields: [membershipId], references: [membershipId], onDelete: Cascade)
+  invoicePendingChanges InvoicePendingChanges[] @relation("InvoicePendingChanges")
 
   @@map("tax_invoice")
 }
@@ -785,6 +790,25 @@ model InvoiceItem {
   taxInvoice TaxInvoice @relation("TaxInvoiceItems", fields: [invoiceId], references: [invoiceId], onDelete: Cascade)
 
   @@map("invoice_item")
+}
+
+model InvoicePendingChanges {
+  id                   Int         @id @default(autoincrement())
+  invoiceId            String
+  approvalStatus       ApprovalStatus @default(PENDING)
+  approvedOrDeclinedBy Int?           @db.Int
+  note                 String?        @db.Text
+  updatedData          Json // Store changes as JSON
+  modifiedBy           Int // User ID of the person making changes
+  modifiedAt           DateTime       @default(now())
+
+  taxInvoice       TaxInvoice @relation("InvoicePendingChanges", fields: [invoiceId], references: [invoiceId], onDelete: Cascade)
+  approvedByAdmin  User?      @relation("InvoiceChangesApprovedBy", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
+  modifiedByEditor User       @relation("TaxInvoiceModifiedBy", fields: [modifiedBy], references: [id], onDelete: Cascade)
+  User             User?      @relation(fields: [userId], references: [id])
+  userId           Int?
+
+  @@map("invoice_pending_changes")
 }
 
 enum leaseQueryStatus {
