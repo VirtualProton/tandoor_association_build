@@ -79,7 +79,9 @@ const approveOrDeclineMemberChanges = (req, res, next) => __awaiter(void 0, void
 exports.approveOrDeclineMemberChanges = approveOrDeclineMemberChanges;
 function applyChanges(prisma, changes, adminId) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { partnerDetails, machineryInformations, branchDetails, attachments, complianceDetails, similarMembershipInquiry, proposer, executiveProposer, declarations, membershipId } = changes, memberData = __rest(changes, ["partnerDetails", "machineryInformations", "branchDetails", "attachments", "complianceDetails", "similarMembershipInquiry", "proposer", "executiveProposer", "declarations", "membershipId"]);
+        // Extract the actual member data from the updatedData field
+        const memberUpdateData = changes.updatedData;
+        const { partnerDetails, machineryInformations, branchDetails, attachments, complianceDetails, similarMembershipInquiry, proposer, executiveProposer, declarations, membershipId } = memberUpdateData, memberData = __rest(memberUpdateData, ["partnerDetails", "machineryInformations", "branchDetails", "attachments", "complianceDetails", "similarMembershipInquiry", "proposer", "executiveProposer", "declarations", "membershipId"]);
         if (partnerDetails) {
             yield updatePartnerDetails(prisma, membershipId, partnerDetails);
         }
@@ -95,46 +97,53 @@ function applyChanges(prisma, changes, adminId) {
             yield updateAttachments(prisma, membershipId, attachments);
         }
         if (complianceDetails) {
-            yield prisma.complianceDetails.update({
+            yield prisma.complianceDetails.upsert({
                 where: {
                     membershipId: membershipId,
                 },
-                data: lodash_1.default.omit(Object.assign(Object.assign({}, complianceDetails), { membershipId }), ['id'])
+                update: lodash_1.default.omit(Object.assign(Object.assign({}, complianceDetails), { membershipId }), ['id']),
+                create: lodash_1.default.omit(Object.assign(Object.assign({}, complianceDetails), { membershipId }), ['id'])
             });
         }
         if (similarMembershipInquiry) {
-            yield prisma.similarMembershipInquiry.update({
+            yield prisma.similarMembershipInquiry.upsert({
                 where: {
                     membershipId: membershipId,
                 },
-                data: lodash_1.default.omit(Object.assign(Object.assign({}, similarMembershipInquiry), { membershipId }), ['id'])
+                update: lodash_1.default.omit(Object.assign(Object.assign({}, similarMembershipInquiry), { membershipId }), ['id']),
+                create: lodash_1.default.omit(Object.assign(Object.assign({}, similarMembershipInquiry), { membershipId }), ['id'])
             });
         }
+        console.log(proposer);
         if (proposer) {
-            yield prisma.proposer.update({
+            yield prisma.proposer.upsert({
                 where: {
                     membershipId: membershipId,
                 },
-                data: lodash_1.default.omit(Object.assign(Object.assign({}, proposer), { membershipId }), ['id'])
+                update: lodash_1.default.omit(Object.assign(Object.assign({}, proposer), { membershipId }), ['id']),
+                create: lodash_1.default.omit(Object.assign(Object.assign({}, proposer), { membershipId }), ['id'])
             });
         }
         if (executiveProposer) {
-            yield prisma.executiveProposer.update({
+            yield prisma.executiveProposer.upsert({
                 where: {
                     membershipId: membershipId,
                 },
-                data: lodash_1.default.omit(Object.assign(Object.assign({}, executiveProposer), { membershipId }), ['id'])
+                update: lodash_1.default.omit(Object.assign(Object.assign({}, executiveProposer), { membershipId }), ['id']),
+                create: lodash_1.default.omit(Object.assign(Object.assign({}, executiveProposer), { membershipId }), ['id'])
             });
         }
         if (declarations) {
-            yield prisma.declarations.update({
+            yield prisma.declarations.upsert({
                 where: {
                     membershipId: membershipId,
                 },
-                data: lodash_1.default.omit(Object.assign(Object.assign({}, declarations), { membershipId }), ['id'])
+                update: lodash_1.default.omit(Object.assign(Object.assign({}, declarations), { membershipId }), ['id']),
+                create: lodash_1.default.omit(Object.assign(Object.assign({}, declarations), { membershipId }), ['id'])
             });
         }
         if (Object.keys(memberData).length > 0) {
+            console.log(memberData);
             yield prisma.members.update({
                 where: {
                     membershipId: membershipId,
@@ -262,7 +271,7 @@ const updateBranchDetails = (prisma, membershipId, branchDetails) => __awaiter(v
                 yield prisma.machineryInformations.deleteMany({
                     where: {
                         id: {
-                            in: deleteMachineryInformations || []
+                            in: deleteMachineryInformations.map((machinery) => machinery.id)
                         },
                         branchId: branch.id
                     }
