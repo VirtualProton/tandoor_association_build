@@ -114,7 +114,7 @@ const pendingUpdateBill = (req, res, next) => __awaiter(void 0, void 0, void 0, 
                         where: {
                             billingId
                         },
-                        data: Object.assign({ userModified: pendingChanges.modifiedBy }, updatedData)
+                        data: Object.assign({ modifiedBy: pendingChanges.modifiedBy }, updatedData)
                     });
                     const updateBill = yield prisma.memberBillingHistory.findUniqueOrThrow({
                         where: {
