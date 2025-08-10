@@ -100,7 +100,7 @@ model User {
   tripRecordsCreatedBy           TripRecords[]                 @relation("TripRecordsCreatedBy")
   tripRecordsModifiedBy          TripRecords[]                 @relation("TripRecordsModifiedBy")
 
-  InvoicePendingChanges InvoicePendingChanges[]
+ 
 
   @@map("users")
 }
@@ -658,7 +658,7 @@ model CustomMember {
 model VehicleAttendees {
   id            Int             @id @default(autoincrement())
   meetId        Int             @unique @db.Int
-  owner         Boolean         @default(true)
+  owner         Boolean         @default(false)
   driver        Boolean         @default(false)
   all           Boolean         @default(false)
   customVehicle CustomVehicle[] @relation("CustomVehicle")
@@ -669,6 +669,8 @@ model CustomVehicle {
   id                 Int              @id @default(autoincrement())
   vehicleId          String           @db.VarChar(100)
   vehicleAttendeesId Int
+  owner              Boolean          @default(false)
+  driver             Boolean          @default(false)
   vehicleAttendees   VehicleAttendees @relation("CustomVehicle", fields: [vehicleAttendeesId], references: [id], onDelete: Cascade)
 
   @@unique([vehicleAttendeesId, vehicleId])
@@ -793,19 +795,19 @@ model InvoiceItem {
 }
 
 model InvoicePendingChanges {
-  id                   Int         @id @default(autoincrement())
+  id                   Int            @id @default(autoincrement())
   invoiceId            String
   approvalStatus       ApprovalStatus @default(PENDING)
   approvedOrDeclinedBy Int?           @db.Int
   note                 String?        @db.Text
   updatedData          Json // Store changes as JSON
-  modifiedBy           Int // User ID of the person making changes
+  modifiedBy           Int? // User ID of the person making changes
   modifiedAt           DateTime       @default(now())
 
   taxInvoice       TaxInvoice @relation("InvoicePendingChanges", fields: [invoiceId], references: [invoiceId], onDelete: Cascade)
   approvedByAdmin  User?      @relation("InvoiceChangesApprovedBy", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
-  modifiedByEditor User       @relation("TaxInvoiceModifiedBy", fields: [modifiedBy], references: [id], onDelete: Cascade)
-  User             User?      @relation(fields: [userId], references: [id])
+  modifiedByEditor User?       @relation("TaxInvoiceModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
+  // User             User?      @relation(fields: [userId], references: [id])
   userId           Int?
 
   @@map("invoice_pending_changes")
