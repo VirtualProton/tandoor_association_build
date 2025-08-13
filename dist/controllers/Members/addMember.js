@@ -303,6 +303,7 @@ const addMemberHandler = (prisma, memberDetails, user) => __awaiter(void 0, void
             ? memberDetails.membershipId
             : customId,
         doj: memberDetails.doj,
+        membershipType: memberDetails.membershipType,
         electricalUscNumber: memberDetails.electricalUscNumber,
         scNumber: memberDetails.scNumber,
         applicantName: memberDetails.applicantName,

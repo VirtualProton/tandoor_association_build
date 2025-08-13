@@ -65,9 +65,9 @@ const ComplianceDetails = zod_1.z.object({
 // Similar Membership Inquiry Schema
 const SimilarMembershipInquiry = zod_1.z.object({
     is_member_of_similar_org: Bool.default("FALSE"),
-    org_details: zod_1.z.string().max(225).optional(),
+    org_details: zod_1.z.string().nullable().optional(),
     has_applied_earlier: Bool.default("FALSE"),
-    previous_application_details: zod_1.z.string().max(225).optional(),
+    previous_application_details: zod_1.z.string().nullable().optional(),
     is_valid_member: Bool.default("FALSE"),
     is_executive_member: Bool.default("FALSE"),
 });
