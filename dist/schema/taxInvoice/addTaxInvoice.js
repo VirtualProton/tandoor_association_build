@@ -7,7 +7,7 @@ const InvoiceItemSchema = zod_1.z.object({
     hsnCode: zod_1.z.string().max(225),
     particular: zod_1.z.string(),
     stoneCount: zod_1.z.number().int(),
-    size: zod_1.z.coerce.number().nonnegative().max(99999999.99), // Decimal(10,2)
+    size: zod_1.z.string().max(50).optional(),
     totalSqFeet: zod_1.z.coerce.number().nonnegative().max(99999999.99),
     ratePerSqFeet: zod_1.z.coerce.number().nonnegative().max(99999999.99),
     amount: zod_1.z.coerce.number().nonnegative().max(99999999.99),
@@ -18,11 +18,16 @@ exports.TaxInvoiceSchema = zod_1.z.object({
     // status: z.enum(["PENDING","APPROVED","DECLINED"]).default("PENDING"),
     membershipId: zod_1.z.string().max(225),
     invoiceDate: zod_1.z.coerce.date(),
+    customerName: zod_1.z.string().max(100),
+    gstInNumber: zod_1.z.string().max(50),
+    billingAddress: zod_1.z.string().max(225),
+    shippingAddress: zod_1.z.string().max(225),
+    eWayNumber: zod_1.z.string().max(50),
+    phoneNumber: zod_1.z.string().max(12),
     cGSTInPercent: zod_1.z.number().int(),
     sGSTInPercent: zod_1.z.number().int(),
     iGSTInPercent: zod_1.z.number().int(),
     subTotal: zod_1.z.coerce.number().nonnegative().max(99999999.99),
     total: zod_1.z.coerce.number().nonnegative().max(99999999.99),
-    invoiceItem: zod_1.z.array(InvoiceItemSchema).nonempty(),
-    createdBy: zod_1.z.string().max(225).optional()
+    invoiceItem: zod_1.z.array(InvoiceItemSchema).nonempty()
 });

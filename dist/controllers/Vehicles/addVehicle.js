@@ -28,6 +28,10 @@ const addVehicle = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         res.status(200).json(result);
     }
     catch (e) {
+        if (e.code === "P2002") {
+            // Unique constraint failed
+            return next(new bad_request_1.BadRequestsException("Vehicle already exists with provided unique fields.", root_1.ErrorCode.BAD_REQUEST));
+        }
         return next(new bad_request_1.BadRequestsException(e.message, root_1.ErrorCode.BAD_REQUEST));
     }
 });

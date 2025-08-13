@@ -27,15 +27,20 @@ const memberAttendees = zod_1.z
 })
     .refine((data) => hasValues(data.custom) || data.allExecutives || hasValues(data.zone) || data.all, { message: "At least one of 'zone', 'all', 'allExecutives', 'mandal',  or 'custom' must be provided" })
     .refine((data) => validateMutualExclusion(data, ['zone', 'custom', 'allExecutives', 'mandal'], 'all'), { message: "When 'all' is true, 'zone', 'custom', and 'allExecutives' must not be provided", path: ["all"] });
+const customVehicle = zod_1.z.object({
+    vehicleId: zod_1.z.string().max(50),
+    owner: zod_1.z.boolean().optional().default(true),
+    driver: zod_1.z.boolean().optional().default(false),
+});
 // Define a schema for vehicle attendees
 const vehicleAttendees = zod_1.z
     .object({
     owner: zod_1.z.boolean().optional().default(true),
     driver: zod_1.z.boolean().optional().default(false),
     all: zod_1.z.boolean().optional().default(false),
-    custom: zod_1.z.array(zod_1.z.string()).optional(),
+    custom: zod_1.z.array(customVehicle).optional().default([]),
 })
-    .refine((data) => data.all || hasValues(data.custom), { message: "At least one of 'all' or 'custom' must be provided" })
+    .refine((data) => data.all || data.custom.length > 0, { message: "At least one of 'all' or 'custom' must be provided" })
     .refine((data) => validateMutualExclusion(data, ['custom'], 'all'), { message: "When 'all' is true, 'custom' must not be provided", path: ["all"] });
 // Define a schema for labour attendees
 const labourAttendees = zod_1.z

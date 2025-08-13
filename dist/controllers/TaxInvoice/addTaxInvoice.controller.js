@@ -43,7 +43,7 @@ const addTaxInvoiceController = (req, res, next) => __awaiter(void 0, void 0, vo
                         })),
                     } }),
             });
-            res.status(200).json({ message: "Tax invoice created successfully", invoice });
+            return res.status(200).json({ message: "Tax invoice created successfully", invoice });
         }
         if (req.user.role === "ADMIN") {
             const invoice = yield __1.prismaClient.taxInvoice.create({
@@ -59,7 +59,7 @@ const addTaxInvoiceController = (req, res, next) => __awaiter(void 0, void 0, vo
                         })),
                     } }),
             });
-            res.status(200).json({ message: "Tax invoice created successfully", invoice });
+            return res.status(200).json({ message: "Tax invoice created successfully", invoice });
         }
         return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
     }

@@ -125,6 +125,7 @@ model Members {
   membershipId        String           @unique @db.VarChar(225)
   approvalStatus      ApprovalStatus   @default(PENDING)
   membershipStatus    MembershipStatus @default(INACTIVE)
+  membershipType      MembershipType   @default(TSMWA)
   nextDueDate         DateTime?
   isPaymentDue        Bool             @default(TRUE)
   doj                 DateTime         @default(now())
@@ -186,6 +187,7 @@ model Members {
   @@index([id, membershipId, electricalUscNumber, scNumber])
   @@map("members")
 }
+
 
 model PartnerDetails {
   id              Int      @id @default(autoincrement())
@@ -528,8 +530,9 @@ model Vehicles {
   // meetingAttendees MeetingAttendees[] @relation("MeetingAttendees")
   userCreated  User?         @relation("vehiclesCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   userModified User?         @relation("vehiclesModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
-
+  CustomVehicleMeeting CustomVehicle[] @relation("VehicleMeeting")
   @@map("vehicles")
+  
 }
 
 model TripRecords {
@@ -672,7 +675,7 @@ model CustomVehicle {
   owner              Boolean          @default(false)
   driver             Boolean          @default(false)
   vehicleAttendees   VehicleAttendees @relation("CustomVehicle", fields: [vehicleAttendeesId], references: [id], onDelete: Cascade)
-
+  vehicle           Vehicles         @relation("VehicleMeeting", fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
   @@unique([vehicleAttendeesId, vehicleId])
 }
 
@@ -760,6 +763,12 @@ model TaxInvoice {
   invoiceId             String                  @unique @db.VarChar(225)
   membershipId          String                  @db.VarChar(225)
   invoiceDate           DateTime
+  customerName          String                  @db.VarChar(100)
+  gstInNumber           String                  @db.VarChar(50)
+  billingAddress        String                  @db.VarChar(225)
+  shippingAddress       String                  @db.VarChar(225)
+  eWayNumber            String                  @db.VarChar(50)
+  phoneNumber           String                  @db.VarChar(12)
   cGSTInPercent         Int                     @db.Int
   sGSTInPercent         Int                     @db.Int
   iGSTInPercent         Int                     @db.Int
@@ -784,7 +793,7 @@ model InvoiceItem {
   hsnCode       String  @db.VarChar(225)
   particular    String  @db.Text
   stoneCount    Int     @db.Int
-  size          Decimal @db.Decimal(10, 2)
+  size         String? @db.VarChar(50)
   totalSqFeet   Decimal @db.Decimal(10, 2)
   ratePerSqFeet Decimal @db.Decimal(10, 2)
   amount        Decimal @db.Decimal(10, 2)
@@ -937,4 +946,10 @@ enum paymentMode {
   UPI
   CARD
   NET_BANKING
+}
+
+
+enum MembershipType {
+  TSMWA
+  TQMWA
 }

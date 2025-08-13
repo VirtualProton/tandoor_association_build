@@ -9,6 +9,7 @@ const OwnershipType = zod_1.z.enum(["OWNER", "TENANT", "TRADER"]);
 const BusinessType = zod_1.z.enum(["OWNED", "RENTED", "TRADER", "FACTORY_GIVEN_ON_LEASE"]);
 // const AttachmentType = z.enum(["SALE_DEED", "RENT_AGREEMENT", "OTHER"]);
 const Bool = zod_1.z.enum(["TRUE", "FALSE"]);
+const MembershipType = zod_1.z.enum(["TSMWA", "TQMWA"]);
 // Proposer Schema
 const Proposer = zod_1.z.object({
     proposerID: zod_1.z.string().nullable().optional(),
@@ -173,6 +174,7 @@ exports.MemberUpdateSchema = zod_1.z.object({
     membershipId: zod_1.z.string(),
     scNumber: zod_1.z.string().optional(),
     electricalUscNumber: zod_1.z.string().optional(),
+    membershipType: MembershipType.optional(),
     doj: zod_1.z.coerce.date().optional(),
     applicantName: zod_1.z.string().max(50).optional(),
     relation: GuardianRelation.optional(),
@@ -223,6 +225,7 @@ exports.MemberUpdateSchema = zod_1.z.object({
     declarations: Declarations.optional(),
 }).refine((data) => data.scNumber !== undefined ||
     data.electricalUscNumber !== undefined ||
+    data.membershipType !== undefined ||
     data.doj !== undefined ||
     data.applicantName !== undefined ||
     data.relation !== undefined ||

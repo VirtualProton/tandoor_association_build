@@ -108,7 +108,11 @@ const meetingAttendeesHandler = (prisma, attendees, meetId) => __awaiter(void 0,
                     driver: vehicleAttendees.driver,
                     all: vehicleAttendees.all,
                     customVehicle: {
-                        create: (_d = vehicleAttendees.custom) === null || _d === void 0 ? void 0 : _d.map((item) => ({ vehicleId: item }))
+                        create: (_d = vehicleAttendees.custom) === null || _d === void 0 ? void 0 : _d.map((vehicle) => ({
+                            vehicleId: vehicle.vehicleId,
+                            owner: vehicle.owner,
+                            driver: vehicle.driver
+                        }))
                     }
                 }
             });

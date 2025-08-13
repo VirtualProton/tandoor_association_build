@@ -9,6 +9,7 @@ const Gender = zod_1.z.enum(["MALE", "FEMALE", "OTHER"]);
 const OwnershipType = zod_1.z.enum(["OWNER", "TENANT", "TRADER"]);
 const BusinessType = zod_1.z.enum(["OWNED", "RENTED", "TRADER", "FACTORY_GIVEN_ON_LEASE"]);
 const Bool = zod_1.z.enum(["TRUE", "FALSE"]);
+const MembershipType = zod_1.z.enum(["TSMWA", "TQMWA"]);
 // Define the Branch Schema
 const Proposer = zod_1.z.object({
     proposerID: zod_1.z.string().nullable(),
@@ -84,6 +85,7 @@ const Declarations = zod_1.z.object({
 exports.MemberSignUpSchema = zod_1.z.object({
     membershipId: zod_1.z.string().max(225).optional(),
     electricalUscNumber: zod_1.z.string(),
+    membershipType: MembershipType,
     doj: zod_1.z.coerce.date().default(new Date()),
     scNumber: zod_1.z.string(),
     applicantName: zod_1.z.string().max(50),
