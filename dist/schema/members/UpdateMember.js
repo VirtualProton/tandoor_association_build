@@ -229,7 +229,8 @@ exports.MemberUpdateSchema = zod_1.z.object({
     proposer: Proposer.optional(),
     executiveProposer: Proposer.optional(),
     declarations: Declarations.optional(),
-}).refine((data) => data.scNumber !== undefined ||
+}).refine((data) => data.membershipStatus !== undefined ||
+    data.scNumber !== undefined ||
     data.electricalUscNumber !== undefined ||
     data.membershipType !== undefined ||
     data.doj !== undefined ||
