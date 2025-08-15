@@ -55,7 +55,8 @@ const otp_service_1 = __importDefault(require("../../services/otp/otp.service"))
 const requestOTP = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { phone } = req.body;
     try {
-        let user = yield __1.prismaClient.user.findFirst({ where: { phone } });
+        const status = "ACTIVE";
+        let user = yield __1.prismaClient.user.findFirst({ where: { phone, status } });
         const identifier = phone;
         if (!identifier) {
             next(new bad_request_1.BadRequestsException("Invalid Number", root_1.ErrorCode.INVALID_INPUT));
