@@ -43,6 +43,9 @@ const approveOrDeclineMember = (req, res, next) => __awaiter(void 0, void 0, voi
                     approvedOrDeclinedBy: req.user.userId,
                 },
             });
+            return res.status(200).json({
+                message: "Member approved successfully",
+            });
         }
         if (action === "DECLINED") {
             yield __1.prismaClient.members.update({
@@ -55,6 +58,9 @@ const approveOrDeclineMember = (req, res, next) => __awaiter(void 0, void 0, voi
                     approvedOrDeclinedBy: req.user.userId,
                     declineReason: declineReason || null,
                 },
+            });
+            return res.status(200).json({
+                message: "Member declined successfully",
             });
         }
     }

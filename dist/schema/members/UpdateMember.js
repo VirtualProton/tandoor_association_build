@@ -7,6 +7,11 @@ const GuardianRelation = zod_1.z.enum(["SO", "DO", "WO"]);
 const Gender = zod_1.z.enum(["MALE", "FEMALE", "OTHER"]);
 const OwnershipType = zod_1.z.enum(["OWNER", "TENANT", "TRADER"]);
 const BusinessType = zod_1.z.enum(["OWNED", "RENTED", "TRADER", "FACTORY_GIVEN_ON_LEASE"]);
+const MembershipStatus = zod_1.z.enum([
+    "ACTIVE",
+    "INACTIVE",
+    "CANCELLED"
+]);
 // const AttachmentType = z.enum(["SALE_DEED", "RENT_AGREEMENT", "OTHER"]);
 const Bool = zod_1.z.enum(["TRUE", "FALSE"]);
 const MembershipType = zod_1.z.enum(["TSMWA", "TQMWA"]);
@@ -172,6 +177,7 @@ const Declarations = zod_1.z.object({
 // Member Update Schema
 exports.MemberUpdateSchema = zod_1.z.object({
     membershipId: zod_1.z.string(),
+    membershipStatus: MembershipStatus.optional(),
     scNumber: zod_1.z.string().optional(),
     electricalUscNumber: zod_1.z.string().optional(),
     membershipType: MembershipType.optional(),
