@@ -33,9 +33,21 @@ const updateBill = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
             return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
         }
         if (["TSMWA_EDITOR", "TQMA_EDITOR"].includes(req.user.role)) {
+            const { membershipId } = (yield __1.prismaClient.memberBillingHistory.findUnique({
+                where: {
+                    billingId: updateBillDetails.billingId
+                },
+                select: {
+                    membershipId: true
+                }
+            })) || {};
+            if (!membershipId) {
+                return next(new bad_request_1.BadRequestsException("Billing record not found", root_1.ErrorCode.NOT_FOUND));
+            }
             const pendingChanges = yield __1.prismaClient.memberBillingPendingChanges.create({
                 data: {
                     billingId: updateBillDetails.billingId,
+                    membershipId,
                     updatedData: updateBillDetails,
                     modifiedBy: req.user.userId
                 }
@@ -44,9 +56,22 @@ const updateBill = (req, res, next) => __awaiter(void 0, void 0, void 0, functio
         }
         if (["ADMIN"].includes(req.user.role)) {
             const createBill = yield __1.prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function* () {
+                const { billingId, membershipId } = (yield prisma.memberBillingHistory.findUnique({
+                    where: {
+                        billingId: updateBillDetails.billingId
+                    },
+                    select: {
+                        billingId: true,
+                        membershipId: true
+                    }
+                })) || {};
+                if (!billingId || !membershipId) {
+                    return next(new bad_request_1.BadRequestsException("Billing record not found", root_1.ErrorCode.NOT_FOUND));
+                }
                 yield __1.prismaClient.memberBillingPendingChanges.create({
                     data: {
                         billingId: updateBillDetails.billingId,
+                        membershipId,
                         updatedData: updateBillDetails,
                         modifiedBy: req.user.userId,
                         approvalStatus: "APPROVED",

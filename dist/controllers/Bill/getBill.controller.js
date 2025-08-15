@@ -194,7 +194,11 @@ const getAllUpdateRequest = (req, res, next) => __awaiter(void 0, void 0, void 0
         if (!["TSMWA_EDITOR", "TQMA_EDITOR", "ADMIN"].includes(req.user.role)) {
             return next(new bad_request_1.BadRequestsException("Unauthorized", root_1.ErrorCode.UNAUTHORIZED));
         }
-        const pendingRequest = yield __1.prismaClient.memberBillingPendingChanges.findMany({});
+        const pendingRequest = yield __1.prismaClient.memberBillingPendingChanges.findMany({
+            include: {
+                members: true
+            }
+        });
         return res.status(200).json({ pendingRequest });
     }
     catch (err) {
