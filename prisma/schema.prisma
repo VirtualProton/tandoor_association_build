@@ -100,8 +100,6 @@ model User {
   tripRecordsCreatedBy           TripRecords[]                 @relation("TripRecordsCreatedBy")
   tripRecordsModifiedBy          TripRecords[]                 @relation("TripRecordsModifiedBy")
 
- 
-
   @@map("users")
 }
 
@@ -183,11 +181,11 @@ model Members {
   LeaseQueryHistory        LeaseQueryHistory[]       @relation("LeaseQueryHistory")
   leaseQueryAttachments    LeaseQueryAttachments[]   @relation("LeaseQueryAttachments")
   UscAssignmentHistory     UscAssignmentHistory[]    @relation("UscAssignmentHistory")
+  memberBillingPendingChanges MemberBillingPendingChanges[] @relation("MemberBillingPendingChanges")
 
   @@index([id, membershipId, electricalUscNumber, scNumber])
   @@map("members")
 }
-
 
 model PartnerDetails {
   id              Int      @id @default(autoincrement())
@@ -417,7 +415,8 @@ model MemberBillingHistory {
 
 model MemberBillingPendingChanges {
   id                   Int            @id @default(autoincrement())
-  billingId            String
+  billingId            String         @db.VarChar(50)
+  membershipId         String         @db.VarChar(50)
   approvalStatus       ApprovalStatus @default(PENDING)
   approvedOrDeclinedBy Int?           @db.Int
   note                 String?        @db.Text
@@ -425,6 +424,7 @@ model MemberBillingPendingChanges {
   modifiedBy           Int // User ID of the person making changes
   modifiedAt           DateTime       @default(now())
 
+  members        Members                       @relation("MemberBillingPendingChanges", fields: [membershipId], references: [membershipId], onDelete: Cascade)
   memberBillingHistory MemberBillingHistory @relation("MemberBillingPendingChanges", fields: [billingId], references: [billingId], onDelete: Cascade)
   approvedByAdmin      User?                @relation("billingChangesApprovedBy", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
   modifiedByEditor     User                 @relation("billingChangesModifiedBy", fields: [modifiedBy], references: [id], onDelete: Cascade)
@@ -521,18 +521,18 @@ model Vehicles {
   ownerName         String        @db.VarChar(50)
   ownerPhoneNumber  String        @db.VarChar(13)
 
-  createdBy    Int?          @db.Int
-  modifiedBy   Int?          @db.Int
-  vehicleType  String?       @db.VarChar(50)
-  createdAt    DateTime      @default(now())
-  modifiedAt   DateTime      @updatedAt
-  tripRecords  TripRecords[] @relation("TripRecord")
+  createdBy            Int?            @db.Int
+  modifiedBy           Int?            @db.Int
+  vehicleType          String?         @db.VarChar(50)
+  createdAt            DateTime        @default(now())
+  modifiedAt           DateTime        @updatedAt
+  tripRecords          TripRecords[]   @relation("TripRecord")
   // meetingAttendees MeetingAttendees[] @relation("MeetingAttendees")
-  userCreated  User?         @relation("vehiclesCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  userModified User?         @relation("vehiclesModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
+  userCreated          User?           @relation("vehiclesCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  userModified         User?           @relation("vehiclesModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
   CustomVehicleMeeting CustomVehicle[] @relation("VehicleMeeting")
+
   @@map("vehicles")
-  
 }
 
 model TripRecords {
@@ -675,7 +675,8 @@ model CustomVehicle {
   owner              Boolean          @default(false)
   driver             Boolean          @default(false)
   vehicleAttendees   VehicleAttendees @relation("CustomVehicle", fields: [vehicleAttendeesId], references: [id], onDelete: Cascade)
-  vehicle           Vehicles         @relation("VehicleMeeting", fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
+  vehicle            Vehicles         @relation("VehicleMeeting", fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
+
   @@unique([vehicleAttendeesId, vehicleId])
 }
 
@@ -793,7 +794,7 @@ model InvoiceItem {
   hsnCode       String  @db.VarChar(225)
   particular    String  @db.Text
   stoneCount    Int     @db.Int
-  size         String? @db.VarChar(50)
+  size          String? @db.VarChar(50)
   totalSqFeet   Decimal @db.Decimal(10, 2)
   ratePerSqFeet Decimal @db.Decimal(10, 2)
   amount        Decimal @db.Decimal(10, 2)
@@ -815,7 +816,7 @@ model InvoicePendingChanges {
 
   taxInvoice       TaxInvoice @relation("InvoicePendingChanges", fields: [invoiceId], references: [invoiceId], onDelete: Cascade)
   approvedByAdmin  User?      @relation("InvoiceChangesApprovedBy", fields: [approvedOrDeclinedBy], references: [id], onDelete: SetNull)
-  modifiedByEditor User?       @relation("TaxInvoiceModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
+  modifiedByEditor User?      @relation("TaxInvoiceModifiedBy", fields: [modifiedBy], references: [id], onDelete: SetNull)
   // User             User?      @relation(fields: [userId], references: [id])
   userId           Int?
 
@@ -947,7 +948,6 @@ enum paymentMode {
   CARD
   NET_BANKING
 }
-
 
 enum MembershipType {
   TSMWA
